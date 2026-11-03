@@ -1,0 +1,1153 @@
+/* El Ropero — riel 3D. Adaptado de un prototipo standalone (cp.html): los overlays que
+   antes eran position:fixed a toda la ventana ahora son position:absolute dentro de esta
+   sección, para poder vivir como un bloque más de la landing en vez de secuestrarla. */
+.ropero-root {
+  --ink: #171613;
+  --paper: #f7f5f0;
+  --concrete: #e6e2da;
+  --line: #d2ccc1;
+  --muted: #5e584f;
+  --brick: #a3412a;
+  --sodium: #f2b01e;
+  --ok: #2e6a3e;
+  --err: #b3261e;
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-body: 15px;
+  color-scheme: light;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
+  background: #e7e5e0;
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+  isolation: isolate;
+}
+@media (max-width: 700px) {
+  .ropero-root {
+    --fs-xs: 12.65px;
+    --fs-sm: 14.4px;
+  }
+  .ropero-root .hbtn b {
+    font-size: 12.65px;
+  }
+  .ropero-root .msg-prev {
+    font-size: 13.8px !important;
+  }
+  .ropero-root #loading small {
+    font-size: 13.8px;
+  }
+}
+.ropero-root button,
+.ropero-root input,
+.ropero-root select,
+.ropero-root textarea {
+  font: inherit;
+  color: inherit;
+}
+.ropero-root button {
+  cursor: pointer;
+}
+.ropero-root :focus-visible {
+  outline: 3px solid var(--sodium);
+  outline-offset: 2px;
+}
+.ropero-root .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.ropero-root #store {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  outline: none;
+  cursor: grab;
+}
+.ropero-root [hidden] {
+  display: none !important;
+}
+
+/* ---------- Menú superior ---------- */
+.ropero-root #top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 20;
+}
+.ropero-root .bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+}
+.ropero-root .brand {
+  text-decoration: none;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+}
+.ropero-root .actions {
+  display: flex;
+  gap: 6px;
+}
+.ropero-root .hbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: rgba(250, 249, 246, 0.88);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  min-height: 38px;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(30, 26, 20, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.ropero-root .hbtn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.ropero-root .hbtn:hover {
+  border-color: var(--ink);
+}
+.ropero-root .hbtn b {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 999px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  min-width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 5px;
+}
+.ropero-root .hbtn b.zero {
+  background: var(--line);
+  color: #3f3b35;
+}
+.ropero-root .hbtn.bump {
+  animation: ropero-bump 0.5s;
+}
+@keyframes ropero-bump {
+  40% {
+    transform: scale(1.12);
+  }
+}
+@media (max-width: 560px) {
+  .ropero-root .hbtn .lbl {
+    display: none;
+  }
+  .ropero-root .hbtn {
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    justify-content: center;
+  }
+  .ropero-root .hbtn b {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+  }
+}
+.ropero-root #vig {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(120% 95% at 50% 40%, rgba(255, 255, 255, 0) 58%, rgba(70, 60, 45, 0.14) 100%);
+}
+
+/* ---------- Dock inferior (secciones) ---------- */
+.ropero-root #dock {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 16px);
+}
+.ropero-root .pill {
+  position: relative;
+  min-width: 0;
+  background: rgba(250, 249, 246, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  padding: 5px;
+  box-shadow: 0 8px 28px rgba(30, 26, 20, 0.14);
+  overflow: hidden;
+}
+.ropero-root #sections {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0;
+}
+.ropero-root #sections::-webkit-scrollbar {
+  display: none;
+}
+.ropero-root #sections button {
+  flex: none;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #4b463f;
+  white-space: nowrap;
+  min-height: 38px;
+  transition: background 0.25s, color 0.25s;
+}
+.ropero-root #sections button:hover {
+  color: var(--ink);
+}
+.ropero-root #sections button[aria-current="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.ropero-root #sections .sep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+  margin: 0 4px;
+}
+.ropero-root #sections .info {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  padding: 8px 13px;
+}
+.ropero-root .pill .prog {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 2px;
+  height: 2px;
+  background: transparent;
+}
+.ropero-root .pill .prog i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--brick);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.ropero-root .arrow {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(250, 249, 246, 0.92);
+  box-shadow: 0 8px 28px rgba(30, 26, 20, 0.14);
+  font-size: 18px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+.ropero-root .arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ropero-root #next.pulse {
+  animation: ropero-pulse 1.8s ease-in-out infinite;
+}
+@keyframes ropero-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(242, 176, 30, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(242, 176, 30, 0.55);
+  }
+}
+@media (max-width: 700px) {
+  .ropero-root #dock {
+    gap: 6px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .ropero-root .arrow {
+    width: 42px;
+    height: 42px;
+  }
+  .ropero-root #sections button {
+    padding: 8px 11px;
+  }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .ropero-root .bar {
+    padding-top: 6px;
+  }
+  .ropero-root #dock {
+    bottom: 6px;
+  }
+  .ropero-root #sections button {
+    min-height: 32px;
+    padding: 5px 11px;
+  }
+  .ropero-root .arrow {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* ---------- Guía inicial + etiqueta de enfoque ---------- */
+.ropero-root #guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+  z-index: 15;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.ropero-root .guide-box {
+  background: rgba(23, 22, 19, 0.86);
+  color: var(--paper);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(360px, calc(100% - 48px));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.ropero-root .guide-box svg {
+  width: 64px;
+  height: 40px;
+  flex: none;
+  animation: ropero-swipeX 1.8s ease-in-out infinite;
+}
+.ropero-root .guide-box b {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 3px;
+}
+.ropero-root .guide-box span {
+  font-size: var(--fs-sm);
+  color: #dcd6cb;
+}
+@keyframes ropero-swipeX {
+  0%,
+  100% {
+    transform: translateX(-8px);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+@media (max-width: 700px) {
+  .ropero-root #guide {
+    bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .ropero-root #guide {
+    bottom: 70px;
+  }
+}
+.ropero-root #focusLabel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  max-width: min(340px, 84%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  will-change: transform;
+}
+.ropero-root #focusLabel.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ropero-root #focusLabel b {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: #36322c;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 6px #edebe7, 0 0 3px #edebe7;
+}
+.ropero-root #focusLabel span {
+  font-size: var(--fs-xs);
+  color: #6f685d;
+  text-shadow: 0 0 6px #edebe7, 0 0 3px #edebe7;
+}
+.ropero-root .fl-btn {
+  margin-top: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  padding: 5px 15px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  min-height: 32px;
+  color: var(--ink);
+}
+.ropero-root .fl-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.ropero-root #loading {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--concrete);
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  transition: opacity 0.5s;
+}
+.ropero-root #loading.done {
+  opacity: 0;
+  pointer-events: none;
+}
+.ropero-root #loading small {
+  display: block;
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-top: 8px;
+  text-align: center;
+}
+.ropero-root #toast {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 12px;
+  padding: 10px 12px 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--fs-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  max-width: calc(100% - 32px);
+}
+.ropero-root #toast button {
+  background: var(--sodium);
+  color: var(--ink);
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+}
+
+/* ---------- Ventanas ---------- */
+.ropero-root dialog.modal {
+  border: 0;
+  padding: 0;
+  margin: auto;
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  width: min(1060px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+.ropero-root dialog.modal[data-w="860"] {
+  width: min(860px, calc(100vw - 32px));
+}
+.ropero-root dialog.modal::backdrop {
+  background: rgba(20, 18, 15, 0.58);
+}
+.ropero-root .m-wrap {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+}
+.ropero-root .m-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.ropero-root .m-head h2 {
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 20px;
+  margin: 0;
+  text-transform: none;
+}
+.ropero-root .m-scroll {
+  overflow: auto;
+  padding: 16px 18px 22px;
+  overscroll-behavior: contain;
+}
+.ropero-root .x {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  line-height: 1;
+  flex: none;
+}
+.ropero-root .x:hover {
+  border-color: var(--ink);
+}
+.ropero-root .fine {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.45;
+}
+@media (max-width: 700px) {
+  .ropero-root dialog.modal,
+  .ropero-root dialog.modal[data-w] {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .ropero-root .m-wrap {
+    max-height: 100dvh;
+    height: 100dvh;
+  }
+}
+
+/* Ficha de producto */
+.ropero-root .pd {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  height: min(700px, calc(100dvh - 32px));
+}
+.ropero-root .studio-host {
+  position: relative;
+  background: radial-gradient(ellipse at 50% 40%, #fbfaf7 0%, #e3dfd6 75%);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ropero-root .studio-host canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: none;
+}
+.ropero-root .stage-hint {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  pointer-events: none;
+}
+.ropero-root .stage-btns {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+.ropero-root .stage-btns button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  min-height: 34px;
+}
+.ropero-root .pd-info {
+  overflow: auto;
+  padding: 18px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overscroll-behavior: contain;
+  --pt: 18px;
+}
+.ropero-root .of-panel {
+  --pt: 16px;
+}
+.ropero-root .pd-info > .pd-top,
+.ropero-root .of-panel > .pd-top {
+  position: sticky;
+  top: calc(-1 * var(--pt));
+  margin-top: calc(-1 * var(--pt));
+  padding: var(--pt) 0 6px;
+  background: var(--paper);
+  z-index: 3;
+}
+.ropero-root .pd-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ropero-root .badge {
+  display: inline-block;
+  font-family: var(--f-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--sodium);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 3px 7px;
+}
+.ropero-root .badge.b-basico {
+  background: var(--concrete);
+}
+.ropero-root .badge.b-acc {
+  background: #dce6de;
+}
+.ropero-root .pd-info h2 {
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.15;
+  margin: 6px 0 0;
+  text-transform: none;
+}
+.ropero-root .price {
+  font-family: var(--f-mono);
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ropero-root .pd-info p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.ropero-root fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ropero-root legend {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 6px;
+}
+.ropero-root legend b {
+  font-weight: 500;
+  color: var(--muted);
+}
+.ropero-root .swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.ropero-root .sw {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  padding: 0;
+  position: relative;
+}
+.ropero-root .sw[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink);
+}
+.ropero-root .sw.custom {
+  background: conic-gradient(#e33, #ec3, #3c5, #3be, #55e, #d3d, #e33);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.ropero-root .sw.custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.ropero-root .swatches.sm .sw {
+  width: 26px;
+  height: 26px;
+}
+.ropero-root .sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ropero-root .sz {
+  min-width: 48px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+.ropero-root .sz[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.ropero-root details summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+.ropero-root .tbl-wrap {
+  overflow-x: auto;
+}
+.ropero-root table.guide {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+}
+.ropero-root table.guide th,
+.ropero-root table.guide td {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+.ropero-root table.guide th {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  font-weight: 600;
+}
+.ropero-root table.guide tr.sel td {
+  background: #fbebc2;
+}
+.ropero-root .qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.ropero-root .qty button {
+  width: 40px;
+  height: 42px;
+  border: 0;
+  background: none;
+  font-size: 18px;
+}
+.ropero-root .qty output {
+  min-width: 28px;
+  text-align: center;
+  font-family: var(--f-mono);
+  font-weight: 600;
+}
+.ropero-root .add-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ropero-root .add-row .btn {
+  flex: 1;
+  min-width: 170px;
+}
+@media (max-width: 700px) {
+  .ropero-root .pd {
+    grid-template-columns: 1fr;
+    grid-template-rows: 44dvh 1fr;
+    height: 100dvh;
+  }
+  .ropero-root .pd-info {
+    padding: 14px 16px calc(22px + env(safe-area-inset-bottom, 0px));
+    --pt: 14px;
+  }
+}
+.ropero-root .row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ropero-root .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  min-height: 42px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.ropero-root .btn.primary {
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+}
+.ropero-root .btn.primary:hover {
+  background: #000;
+}
+.ropero-root .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Arma tu outfit */
+.ropero-root .of {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  height: min(720px, calc(100dvh - 32px));
+}
+.ropero-root .of-panel {
+  overflow: auto;
+  padding: 16px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overscroll-behavior: contain;
+}
+.ropero-root .of-group {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+}
+.ropero-root .of-group h3 {
+  margin: 0;
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--f-mono);
+}
+.ropero-root .opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ropero-root .opt {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  min-height: 40px;
+  text-align: left;
+}
+.ropero-root .opt small {
+  display: block;
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.ropero-root .opt[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.ropero-root .opt[aria-pressed="true"] small {
+  color: #cfc8bb;
+}
+.ropero-root .sel-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+}
+.ropero-root .sel-size select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #fff;
+  min-height: 38px;
+}
+.ropero-root .of-total {
+  position: sticky;
+  bottom: -22px;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  padding: 12px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ropero-root .of-total .sum {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ropero-root .of-total .sum b {
+  font-family: var(--f-mono);
+  font-size: 20px;
+}
+.ropero-root .photo-box {
+  border: 1px dashed var(--ink);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fffdf6;
+}
+.ropero-root .photo-box h3 {
+  margin: 0;
+  font-size: 15px;
+  text-transform: none;
+}
+.ropero-root .photo-ctl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+  font-size: var(--fs-sm);
+}
+.ropero-root .photo-ctl input[type="range"] {
+  width: 100%;
+}
+.ropero-root #ofPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.ropero-root #ofStage canvas {
+  z-index: 1;
+}
+.ropero-root #ofStage.photo {
+  background: #111;
+}
+.ropero-root #ofStage.photo .stage-hint {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  padding: 5px 8px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 24px);
+}
+@media (max-width: 700px) {
+  .ropero-root .of {
+    grid-template-columns: 1fr;
+    grid-template-rows: 46dvh 1fr;
+    height: 100dvh;
+  }
+  .ropero-root .of-panel {
+    padding: 12px 14px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Catálogo */
+.ropero-root .filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.ropero-root .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.ropero-root .pc {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ropero-root .pc img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  max-width: 100%;
+  object-fit: contain;
+  background: radial-gradient(ellipse at 50% 40%, #fbfaf7, #e6e2da);
+}
+.ropero-root .pc .pcb {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.ropero-root .pc h3 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.2;
+  text-transform: none;
+}
+.ropero-root .pc .meta {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.ropero-root .pc .row {
+  margin-top: auto;
+}
+.ropero-root .pc .btn {
+  flex: 1;
+  padding: 8px 10px;
+}
+.ropero-root .info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.ropero-root .info-grid section {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+}
+.ropero-root .info-grid h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  text-transform: none;
+}
+.ropero-root .info-grid p {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  margin: 0;
+}
+.ropero-root .ex {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  background: var(--concrete);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+@media (max-width: 700px) {
+  .ropero-root .ex {
+    font-size: 12px;
+  }
+}
+
+/* Pantalla simple sin WebGL */
+.ropero-root #fallback {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  background: var(--paper);
+  z-index: 100;
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
+}
+.ropero-root #fallback .fb-in {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ropero-root #fallback h1 {
+  font-family: var(--f-display);
+  font-weight: 800;
+  font-size: 28px;
+  margin: 0;
+  text-transform: none;
+}
+.ropero-root .fb-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+.ropero-root .fb-item b {
+  font-size: 15px;
+}
+.ropero-root .fb-item .pr {
+  font-family: var(--f-mono);
+  font-weight: 600;
+}
+.ropero-root .fb-item .sws {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  grid-column: 1/-1;
+}
+.ropero-root .fb-item .sws i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ropero-root #next.pulse,
+  .ropero-root .guide-box svg,
+  .ropero-root .hbtn.bump {
+    animation: none;
+  }
+  .ropero-root .pill .prog i {
+    transition: none;
+  }
+}

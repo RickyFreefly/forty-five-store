@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+ * FORTY FIVE — official palette (brand manual, stage 04).
+ * Kallisto / Swiss 721 are licensed faces we don't have files for yet;
+ * --font-display / --font-sans are the single place that substitutes live,
+ * so swapping in the real @font-face files later only touches this block.
+ */
+@theme {
+  --font-display: "Poppins", "Inter", system-ui, sans-serif; /* temp stand-in for Kallisto */
+  --font-sans: "Inter", system-ui, sans-serif; /* temp stand-in for Swiss 721 */
+
+  --color-ink: #211f20; /* Graphite Black */
+  --color-paper: #f3efec; /* Off White */
+  --color-violet: #4949c4; /* Performance Violet */
+  --color-orange: #fe572b; /* Aero Orange */
+  --color-accent: #daff04; /* Electric Lime — active states & CTAs */
+  --color-accent-ink: #211f20;
+
+  --color-surface: #2a2729; /* tint of Graphite Black, for raised panels */
+  --color-surface-raised: #332f31;
+  --color-paper-dim: #c9c2bc; /* tint of Off White, for secondary text on dark */
+  --color-metal: #8d8688; /* neutral graphite-tinted metal for rack hardware */
+  --color-metal-dark: #4c4749;
+  --color-line: rgba(243, 239, 236, 0.12);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
