@@ -8,10 +8,22 @@ interface DashboardPanelProps {
   as?: "div" | "button";
   onClick?: () => void;
   ariaLabel?: string;
+  ariaExpanded?: boolean;
+  ariaControls?: string;
 }
 
 /** Shared chrome for every CategoryDashboard panel — dark card, hairline border, numbered header. */
-export function DashboardPanel({ title, index, children, className, as = "div", onClick, ariaLabel }: DashboardPanelProps) {
+export function DashboardPanel({
+  title,
+  index,
+  children,
+  className,
+  as = "div",
+  onClick,
+  ariaLabel,
+  ariaExpanded,
+  ariaControls,
+}: DashboardPanelProps) {
   const headerRow = (
     <div className="flex items-start justify-between border-b border-line px-4 py-3">
       <span className="font-display text-[11px] leading-tight font-semibold tracking-[0.1em] text-paper uppercase">
@@ -29,6 +41,8 @@ export function DashboardPanel({ title, index, children, className, as = "div", 
         type="button"
         onClick={onClick}
         aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
         className={`group flex flex-col border border-line bg-surface text-left transition hover:border-orange focus-visible:border-orange focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${className ?? ""}`}
       >
         {headerRow}
