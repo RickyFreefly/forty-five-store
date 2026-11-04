@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { DURATION } from "../../lib/motionTokens";
+import { useProductFocusStore } from "../../store/productFocus";
 
 interface CategoryFlyoutProps {
   id: string;
@@ -22,7 +23,11 @@ export function CategoryFlyout({ id, open, onClose, children }: CategoryFlyoutPr
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // A product focus view opened from inside this flyout owns Escape: it
+      // closes first, and the flyout stays open underneath it.
+      if (useProductFocusStore.getState().product !== null) return;
+      onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

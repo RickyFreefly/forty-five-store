@@ -34,10 +34,33 @@ describe("CategoryAccordion", () => {
     expect(screen.getByText(/todavía no hay prendas/i)).toBeInTheDocument();
   });
 
-  it("returns focus to the trigger when isOpen flips from true to false (Escape/backdrop case)", () => {
-    const { rerender } = render(<CategoryAccordion category={upper} isOpen onToggle={() => {}} />);
+  it("does NOT move focus to its trigger when closed from outside (a sibling category opened)", () => {
+    const { rerender } = render(
+      <>
+        <CategoryAccordion category={upper} isOpen onToggle={() => {}} />
+        <button type="button">otra categoría</button>
+      </>,
+    );
     const trigger = screen.getByRole("button", { name: /prendas superiores/i });
-    rerender(<CategoryAccordion category={upper} isOpen={false} onToggle={() => {}} />);
+    const sibling = screen.getByRole("button", { name: "otra categoría" });
+    sibling.focus();
+    rerender(
+      <>
+        <CategoryAccordion category={upper} isOpen={false} onToggle={() => {}} />
+        <button type="button">otra categoría</button>
+      </>,
+    );
+    expect(trigger).not.toHaveFocus();
+    expect(sibling).toHaveFocus();
+  });
+
+  it("closes and returns focus to the trigger on Escape", async () => {
+    const onToggle = vi.fn();
+    render(<CategoryAccordion category={upper} isOpen onToggle={onToggle} />);
+    const trigger = screen.getByRole("button", { name: /prendas superiores/i });
+    screen.getByText("Flow Line Tee").closest("button")!.focus();
+    await userEvent.keyboard("{Escape}");
+    expect(onToggle).toHaveBeenCalledTimes(1);
     expect(trigger).toHaveFocus();
   });
 });

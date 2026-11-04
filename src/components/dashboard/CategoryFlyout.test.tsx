@@ -1,9 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CategoryFlyout } from "./CategoryFlyout";
+import { useProductFocusStore } from "../../store/productFocus";
+import { clothingProducts } from "../../data/products";
 
 describe("CategoryFlyout", () => {
+  afterEach(() => useProductFocusStore.getState().close());
+
   it("does not render children when closed", () => {
     render(
       <CategoryFlyout id="f1" open={false} onClose={() => {}}>
@@ -45,5 +49,21 @@ describe("CategoryFlyout", () => {
     expect(onClose).not.toHaveBeenCalled();
     await userEvent.click(screen.getByTestId("category-flyout-backdrop"));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("ignores Escape while a product focus view is open (that view owns Escape)", async () => {
+    const onClose = vi.fn();
+    render(
+      <CategoryFlyout id="f1" open onClose={onClose}>
+        <p>contenido</p>
+      </CategoryFlyout>,
+    );
+    useProductFocusStore.getState().open(clothingProducts[0]);
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).not.toHaveBeenCalled();
+
+    useProductFocusStore.getState().close();
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
