@@ -1,6 +1,7 @@
 import { AnimatePresence } from "motion/react";
 import { SiteHeader } from "./components/SiteHeader";
 import { ShowroomHero } from "./components/ShowroomHero";
+import { FreefallSection } from "./components/FreefallSection";
 import { RoperoSection } from "./components/ropero/RoperoSection";
 import { BrandPhilosophy } from "./components/BrandPhilosophy";
 import { AccessoriesPreview } from "./components/AccessoriesPreview";
@@ -22,6 +23,8 @@ function App() {
       <SiteHeader />
 
       <ShowroomHero onExplore={() => scrollTo("#ropero")} onDiscover={() => scrollTo("#filosofia")} />
+
+      <FreefallSection onShop={() => scrollTo("#ropero")} />
 
       <RoperoSection />
 
