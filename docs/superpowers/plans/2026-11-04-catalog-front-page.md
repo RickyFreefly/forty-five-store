@@ -159,6 +159,7 @@ git commit -m "test: add Vitest + React Testing Library harness"
     gender: Gender,
     subcategoryId?: string,
   ): ClothingProduct[];
+  export function matchesGender(product: ClothingProduct, gender: Gender): boolean;
   ```
 
 - [ ] **Step 1: Add `gender?: "M" | "F";` to `ProductBase` in `src/types/product.ts`**
@@ -169,7 +170,8 @@ One line in the existing interface; no product in `products.ts` sets it, so ever
 
 ```ts
 import { describe, it, expect } from "vitest";
-import { resolveCatalogSlice, CATALOG_CATEGORIES } from "./catalogTaxonomy";
+import { resolveCatalogSlice, matchesGender, CATALOG_CATEGORIES } from "./catalogTaxonomy";
+import { clothingProducts } from "./products";
 
 describe("CATALOG_CATEGORIES", () => {
   it("has the four categories from the spec with their slot counts", () => {
@@ -209,12 +211,24 @@ describe("resolveCatalogSlice", () => {
     expect(lower.every((p) => p.group === "inferior")).toBe(true);
   });
 
-  it("excludes a product whose gender doesn't match, includes it when it does", () => {
-    // flow-line-tee has no gender in products.ts — this test only needs resolveCatalogSlice's
-    // own filtering logic, so it is independent of any fixture data in products.ts.
+  it("includes every upper product in both M and F today (none is gendered yet)", () => {
     const upperM = resolveCatalogSlice("upper", "M").map((p) => p.id);
     const upperF = resolveCatalogSlice("upper", "F").map((p) => p.id);
-    expect(upperM).toEqual(upperF); // no product is gendered today, so both sets are identical
+    expect(upperM).toEqual(upperF);
+  });
+});
+
+describe("matchesGender", () => {
+  const base = clothingProducts[0];
+
+  it("matches when the product has no gender set", () => {
+    expect(matchesGender({ ...base, gender: undefined }, "M")).toBe(true);
+    expect(matchesGender({ ...base, gender: undefined }, "F")).toBe(true);
+  });
+
+  it("matches only its own gender when one is set", () => {
+    expect(matchesGender({ ...base, gender: "F" }, "F")).toBe(true);
+    expect(matchesGender({ ...base, gender: "F" }, "M")).toBe(false);
   });
 });
 ```
@@ -271,7 +285,7 @@ export const CATALOG_CATEGORIES: CategoryConfig[] = [
   },
 ];
 
-function matchesGender(product: ClothingProduct, gender: Gender): boolean {
+export function matchesGender(product: ClothingProduct, gender: Gender): boolean {
   return product.gender === undefined || product.gender === gender;
 }
 
@@ -571,6 +585,15 @@ grid responsive (`grid-cols-1 sm:grid-cols-2`) de `ProductCard`; botones Prev/Si
 solo si `products.length > pageSize`, `Prev` deshabilitado en `page === 0`, `Siguiente`
 deshabilitado en la última página.
 
+Aparición de productos (constraint global: "fade-in con ligero desplazamiento
+vertical"): envuelve el grid en `motion.div` con las mismas variantes que ya usa
+`CategoryDashboard.tsx` hoy (`gridVariants`: `{hidden:{}, show:{transition:{staggerChildren:.07,
+delayChildren:.1}}}`; `itemVariants` por tarjeta: `{hidden:{opacity:0,y:14},
+show:{opacity:1,y:0,transition:{duration:.35}}}`) — copia esas dos constantes locales
+a `ProductGrid.tsx` en vez de inventar valores nuevos, y respeta `useReducedMotion`
+igual que el resto del dashboard. No hace falta testear valores de animación en
+jsdom; ningún otro componente del dashboard los testea hoy.
+
 - [ ] **Step 4: Run `npm test` and verify these pass**
 
 - [ ] **Step 5: Commit**
@@ -747,7 +770,8 @@ git commit -m "feat: add CategoryFlyout component"
 
 **Interfaces:**
 - Consumes: `CategoryConfig`, `resolveCatalogSlice` (Task 2); `GenderSelector` (existente);
-  `SubcategorySelector` (Task 7); `ProductGrid` (Task 6); `CategoryFlyout` (Task 8);
+  `SubcategorySelector` (Task 7); `ProductGrid` (Task 6); `CategoryFlyout`, `DURATION`
+  (Task 8, `src/lib/motionTokens.ts`);
   `DashboardPanel` (existente, para el chrome del trigger).
 - Produces: `CategoryAccordion({ category: CategoryConfig, isOpen: boolean, onToggle: () => void })`.
 
@@ -803,15 +827,25 @@ describe("CategoryAccordion", () => {
 
 - [ ] **Step 3: Implement `CategoryAccordion`**
 
+El elemento raíz de `CategoryAccordion` necesita `lg:relative` — `CategoryFlyout` se
+posiciona `lg:absolute lg:top-full` (Task 8) respecto al ancestro posicionado más
+cercano; sin este `relative` en el acordeón, el flyout se ancla a un ancestro más
+arriba en el árbol y pierde el ancho de columna que Task 8 pide ("ancho igual a la
+columna del dashboard").
+
 Estado interno: `gender` (`useState<Gender>("M")`), `subcategoryId`
 (`useState(category.subcategories?.[0]?.id ?? "")`). Header/trigger = botón con
 `aria-expanded={isOpen}` `aria-controls={flyoutId}` sobre el chrome de `DashboardPanel`
 (título + índice + chevron que rota con `isOpen`), `onClick={onToggle}`. Dentro de
-`CategoryFlyout` (`id=flyoutId`, `open={isOpen}`, `onClose={onToggle}`):
-`GenderSelector` (duración `DURATION.genderSwitch` en su transición si aplica) +
-`SubcategorySelector` si `category.subcategories` existe + `ProductGrid` con
-`products={resolveCatalogSlice(category.id, gender, subcategoryId)}` y
+`CategoryFlyout` (`id=flyoutId`, `open={isOpen}`, `onClose={onToggle}`): `GenderSelector`
+(sin cambios, se usa tal cual) + `SubcategorySelector` si `category.subcategories` existe
++ `ProductGrid` con `products={resolveCatalogSlice(category.id, gender, subcategoryId)}` y
 `slots={category.subcategories?.find(s => s.id === subcategoryId)?.slots ?? category.slots!}`.
+Constraint global "Transición M/F: 150–200ms" (`DURATION.genderSwitch`, Task 8): envuelve
+el `ProductGrid` en `<motion.div key={gender + subcategoryId} initial={{opacity:0}}
+animate={{opacity:1}} transition={{duration: DURATION.genderSwitch}}>` para que cambiar
+género o subcategoría haga un crossfade corto del contenido del grid (independiente del
+fade-in de aparición que `ProductGrid` ya trae de Task 6 para su primer render).
 `triggerRef = useRef<HTMLButtonElement>(null)` en el botón; `useEffect` que compara
 `isOpen` con su valor anterior (`useRef`/`usePrevious` inline) y, cuando pasa de
 `true` a `false`, llama `triggerRef.current?.focus()` — cubre tanto el cierre por
