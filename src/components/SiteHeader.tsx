@@ -5,7 +5,6 @@ import { useCartStore, cartCount } from "../store/cart";
 
 const LINKS = [
   { href: "#inicio", label: "Trajes técnicos" },
-  { href: "#superior", label: "Prendas" },
   { href: "#ropero", label: "El Ropero" },
   { href: "#accesorios", label: "Accesorios" },
   { href: "#filosofia", label: "Sobre Forty Five" },

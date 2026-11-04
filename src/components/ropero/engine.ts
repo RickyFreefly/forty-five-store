@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { useCartStore, cartCount, type CartLine } from "../../store/cart";
 import { formatCOP } from "../../data/products";
 import { ROPERO_CFG, COLORS, PRODUCTS, PROD, PKEY, PRINT_AT, SECS, LOOK, GUIDES, SIZES, SIZE_SCALE } from "../../data/ropero";
+import { HOODIE_PHOTOS, TEE_PHOTOS, POLO_PHOTOS, PANT_PHOTOS } from "../../data/roperoPhotos";
 
 export function mountRopero(root: HTMLElement): () => void {
   const T = THREE;
@@ -1587,10 +1588,58 @@ export function mountRopero(root: HTMLElement): () => void {
     p.receiveShadow = true;
     return p;
   }
+  /* ===================== Fotos reales (de cp.html) para la vista de frente =====================
+     Cuando un producto declara `photo`, la vista de frente usa la foto real del tipo de prenda
+     más parecido en vez de pintarse por código; el perfil (lateral) sigue pintado siempre. */
+  const PHOTO_SETS: Record<string, any> = { hoodie: HOODIE_PHOTOS, tee: TEE_PHOTOS, polo: POLO_PHOTOS, pant: PANT_PHOTOS };
+  const PHOTO_W = 0.8,
+    PHOTO_TOP = -0.105;
+  function photoOf(pid: string, color: string) {
+    const p = (PROD as any)[pid],
+      set = p && p.photo && PHOTO_SETS[p.photo as string];
+    return (set && (set[color] || set[p.def])) || null;
+  }
+  const PHTEX = new Map<any, THREE.Texture>();
+  function photoImg(ph: any) {
+    if (!ph.img) {
+      ph.img = new Image();
+      ph.img.src = ph.src;
+      ph.ready = ph.img.decode().catch(() => {});
+    }
+    return ph;
+  }
+  function photoTex(ph: any) {
+    if (PHTEX.has(ph)) return PHTEX.get(ph)!;
+    photoImg(ph);
+    const t = new T.Texture(ph.img);
+    (t as any).encoding = (T as any).sRGBEncoding;
+    t.anisotropy = 8;
+    t.wrapS = t.wrapT = T.ClampToEdgeWrapping;
+    ph.ready.then(() => {
+      t.needsUpdate = true;
+      invalidate();
+      if (studio) studio.needs = true;
+    });
+    PHTEX.set(ph, t);
+    return t;
+  }
+  async function photoThumb(ph: any) {
+    photoImg(ph);
+    await ph.ready;
+    const N = 360,
+      c = mkCanvas(N, N),
+      g = c.getContext("2d")!,
+      s = Math.min((N * 0.9) / ph.w, (N * 0.9) / ph.h),
+      w = ph.w * s,
+      h = ph.h * s;
+    g.drawImage(ph.img, (N - w) / 2, (N - h) / 2, w, h);
+    return c.toDataURL("image/png");
+  }
   function flatGarment(pid: string, color: string) {
     const p = (PROD as any)[pid],
       key = (PKEY as any)[pid],
-      hex = colorInfo(color).hex,
+      ph = photoOf(pid, color),
+      hex = ph ? ph.ref : colorInfo(color).hex,
       col = tintLin(hex),
       G = new T.Group(),
       fr = new T.Group(),
@@ -1598,7 +1647,20 @@ export function mountRopero(root: HTMLElement): () => void {
     G.add(fr);
     G.add(sd);
     const F = ptex(key);
-    fr.add(pMesh(F, col));
+    let spec = F.sp;
+    if (ph) {
+      const PW = ph.W || PHOTO_W,
+        PT = ph.T ?? PHOTO_TOP,
+        h = (PW * ph.h) / ph.w,
+        m = new T.MeshStandardMaterial({ map: photoTex(ph), roughness: 0.95, metalness: 0, transparent: true, alphaTest: 0.3, side: T.DoubleSide, envMapIntensity: 0.6 }),
+        pl = M(new T.PlaneGeometry(PW, h), m);
+      pl.position.y = -(PT + h / 2);
+      pl.castShadow = true;
+      fr.add(pl);
+      spec = { w: PW, t: PT, b: PT + h };
+    } else {
+      fr.add(pMesh(F, col));
+    }
     const pa = (PRINT_AT as any)[pid];
     if (pa) {
       const pm = printMat(pa.kind, hex, pa.a, pa.label).clone();
@@ -1644,7 +1706,7 @@ export function mountRopero(root: HTMLElement): () => void {
       }
     };
     (G as any).userData.fade(0);
-    (G as any).userData.spec = F.sp;
+    (G as any).userData.spec = spec;
     return G;
   }
   function flatThumb(pid: string, color: string) {
@@ -1703,7 +1765,10 @@ export function mountRopero(root: HTMLElement): () => void {
     while (thumbQueue.length) {
       const { pid, color, res } = thumbQueue.shift();
       const k = pid + "|" + color;
-      if (!thumbCache.has(k)) thumbCache.set(k, flatThumb(pid, color));
+      if (!thumbCache.has(k)) {
+        const ph = photoOf(pid, color);
+        thumbCache.set(k, ph ? await photoThumb(ph) : flatThumb(pid, color));
+      }
       const url = thumbCache.get(k)!;
       $$(`img[data-thumb="${k}"]`).forEach((im: any) => (im.src = url));
       res(url);
@@ -1958,21 +2023,26 @@ export function mountRopero(root: HTMLElement): () => void {
     }
     rail.push(slot("end", "pedido", { w: 0.55 }));
     rail.forEach(makeSlotObj);
+    const heroH = 520,
+      heroFs = heroH * 0.34;
+    const heroMeasure = mkCanvas(8, 8).getContext("2d")!;
+    heroMeasure.font = `800 ${heroFs}px ${DISPLAY}`;
+    const heroW = Math.max(1400, Math.ceil(heroMeasure.measureText(ROPERO_CFG.brand).width) + 120);
     const hero = wallText(
       (g, w, h) => {
         g.textAlign = "center";
         g.fillStyle = "#111111";
-        g.font = `800 ${h * 0.46}px ${DISPLAY}`;
-        g.fillText(ROPERO_CFG.brand, w / 2, h * 0.46);
+        g.font = `800 ${heroFs}px ${DISPLAY}`;
+        g.fillText(ROPERO_CFG.brand, w / 2, h * 0.4);
         g.fillStyle = "#6A645A";
         g.font = `600 ${h * 0.075}px ${MONO}`;
-        g.fillText(ROPERO_CFG.sub, w / 2, h * 0.68);
+        g.fillText(ROPERO_CFG.sub, w / 2, h * 0.62);
         g.fillStyle = "#A3412A";
         g.font = `600 ${h * 0.09}px ${MONO}`;
-        g.fillText(ROPERO_CFG.tagline, w / 2, h * 0.84);
+        g.fillText(ROPERO_CFG.tagline, w / 2, h * 0.78);
       },
-      1400,
-      520,
+      heroW,
+      heroH,
       0.6,
     );
     hero.position.set(-0.2, 2.02, 0.002);
@@ -2800,7 +2870,7 @@ export function mountRopero(root: HTMLElement): () => void {
     photo: false,
     off: { x: 0, y: 0, s: 1, r: 0 },
     url: null,
-    st: { top: "drop-zone-hoodie", topC: "graphite", topS: "M", bot: "exit-point-trouser", botC: "graphite", botS: "M" },
+    st: { top: "drop-zone-hoodie", topC: "negro", topS: "M", bot: "exit-point-trouser", botC: "carbon", botS: "M" },
   };
   const OFH = {
     down() {

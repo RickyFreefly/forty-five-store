@@ -9,6 +9,8 @@ import { GRAPHITE, OFFWHITE, VIOLET, ORANGE, LIME } from "./colors";
 
 export type RoperoCat = "arriba" | "abajo" | "accesorio";
 export type RoperoPainterKey = "hoodie" | "teeOv" | "teeReg" | "jogger" | "cap";
+/** Set de fotos reales (de cp.html) a usar para la vista de frente. Sin esto, se pinta por código. */
+export type RoperoPhotoSet = "hoodie" | "tee" | "polo" | "pant";
 
 export interface RoperoProduct {
   id: string;
@@ -23,6 +25,8 @@ export interface RoperoProduct {
   sizes: string[];
   guide: "teeOv" | "teeReg" | "hoodie" | "jogger" | "cap";
   desc: string;
+  /** Si está presente, la vista de frente usa una foto real en vez de la silueta pintada. */
+  photo?: RoperoPhotoSet;
 }
 
 export const ROPERO_CFG = {
@@ -32,9 +36,35 @@ export const ROPERO_CFG = {
 };
 
 const PALETTE = [GRAPHITE, OFFWHITE, VIOLET, ORANGE, LIME];
-export const COLORS: Record<string, [string, string]> = Object.fromEntries(
-  PALETTE.map((c) => [c.id, [c.name, c.hex] as [string, string]]),
-);
+/**
+ * Colores de las fotos reales (ver roperoPhotos.ts), tal cual existen en cp.html — no son
+ * parte de la paleta oficial de FORTY FIVE (colors.ts), pero son los colores en que de
+ * verdad fueron fotografiadas esas prendas, así que se muestran tal cual.
+ */
+const PHOTO_COLORS: Record<string, [string, string]> = {
+  hueso: ["Blanco hueso", "#ECE6D9"],
+  negro: ["Negro", "#1E1E20"],
+  jaspe: ["Gris jaspe", "#A7A6A2"],
+  carbon: ["Gris carbón", "#46474A"],
+  marino: ["Azul marino", "#1F2A44"],
+  celeste: ["Celeste", "#9DC3E2"],
+  oliva: ["Verde oliva", "#68683A"],
+  bosque: ["Verde bosque", "#24452F"],
+  vinotinto: ["Vinotinto", "#5B1A25"],
+  naranja: ["Naranja", "#DE6A2D"],
+  arena: ["Arena", "#CDB892"],
+  cafe: ["Café", "#603B30"],
+  chicle: ["Rosa chicle", "#FC64A8"],
+  verdeK: ["Verde kelly", "#24974A"],
+  cobalto: ["Azul cobalto", "#405C95"],
+  fucsia: ["Fucsia", "#DE1874"],
+  crema: ["Crema", "#EFDABF"],
+  camel: ["Camel", "#B98A55"],
+};
+export const COLORS: Record<string, [string, string]> = {
+  ...Object.fromEntries(PALETTE.map((c) => [c.id, [c.name, c.hex] as [string, string]])),
+  ...PHOTO_COLORS,
+};
 
 export const SIZES = ["XS", "S", "M", "L", "XL"];
 export const SIZE_SCALE: Record<string, number> = { XS: 0.92, S: 0.96, M: 1, L: 1.04, XL: 1.08, Única: 1 };
@@ -48,8 +78,8 @@ export const PRODUCTS: RoperoProduct[] = [
     cat: "arriba",
     type: "teeOv",
     badge: "Más vendido",
-    colors: ["graphite", "offwhite", "lime"],
-    def: "graphite",
+    colors: ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"],
+    def: "jaspe",
     sizes: SIZES,
     guide: "teeOv",
     desc: "Camiseta técnica oversize de secado rápido con panel de malla en la espalda, trazada con las líneas de flujo aerodinámico de la marca.",
@@ -62,8 +92,8 @@ export const PRODUCTS: RoperoProduct[] = [
     cat: "arriba",
     type: "teeReg",
     badge: "Básico",
-    colors: ["graphite", "offwhite", "violet"],
-    def: "graphite",
+    colors: ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"],
+    def: "negro",
     sizes: SIZES,
     guide: "teeReg",
     desc: "Algodón peinado de 220g con retícula técnica impresa. El básico de cada salida al hangar.",
@@ -76,8 +106,8 @@ export const PRODUCTS: RoperoProduct[] = [
     cat: "arriba",
     type: "teeReg",
     badge: "Nuevo",
-    colors: ["graphite", "violet", "lime"],
-    def: "violet",
+    colors: ["bosque", "negro", "marino", "hueso", "vinotinto", "camel"],
+    def: "marino",
     sizes: SIZES,
     guide: "teeReg",
     desc: "Jersey técnico de malla ligera con cortes de competición y vivos de contraste.",
@@ -90,8 +120,8 @@ export const PRODUCTS: RoperoProduct[] = [
     cat: "arriba",
     type: "hoodie",
     badge: "Nuevo",
-    colors: ["graphite", "offwhite", "lime"],
-    def: "graphite",
+    colors: ["oliva", "celeste", "naranja", "chicle", "verdeK", "cobalto", "negro", "fucsia", "crema", "marino", "cafe", "carbon"],
+    def: "negro",
     sizes: SIZES,
     guide: "hoodie",
     desc: "Hoodie de felpa pesada con bolsillo canguro y capucha reforzada, para esperar el próximo manifiesto.",
@@ -104,8 +134,8 @@ export const PRODUCTS: RoperoProduct[] = [
     cat: "abajo",
     type: "jogger",
     badge: "Nuevo",
-    colors: ["graphite", "violet"],
-    def: "graphite",
+    colors: ["camel", "arena", "cafe", "carbon", "marino", "negro"],
+    def: "carbon",
     sizes: SIZES,
     guide: "jogger",
     desc: "Jogger técnico con bolsillos de carga y puño ajustable. Se mueve contigo antes y después del salto.",
@@ -170,8 +200,8 @@ export const SECS: RoperoSection[] = [
     title: "Nuevo en el hangar",
     sub: "Lo nuevo · Drop Zone",
     items: [
-      ["drop-zone-hoodie", ["graphite", "offwhite", "lime"]],
-      ["exit-point-trouser", ["graphite", "violet"]],
+      ["drop-zone-hoodie", ["oliva", "celeste", "naranja", "chicle", "verdeK", "cobalto", "negro", "fucsia", "crema", "marino", "cafe", "carbon"]],
+      ["exit-point-trouser", ["camel", "arena", "cafe", "carbon", "marino", "negro"]],
     ],
   },
   {
@@ -179,7 +209,7 @@ export const SECS: RoperoSection[] = [
     name: "Más vendidos",
     title: "Más vendidos",
     sub: "Lo que más se lleva",
-    items: [["flow-line-tee", ["graphite", "offwhite", "lime"]]],
+    items: [["flow-line-tee", ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"]]],
   },
   { id: "look", name: "Completa el look", title: "Completa el look", sub: "Arriba + abajo" },
   {
@@ -188,8 +218,8 @@ export const SECS: RoperoSection[] = [
     title: "Básicos técnicos",
     sub: "Todos los días",
     items: [
-      ["terminal-tee", ["graphite", "offwhite", "violet"]],
-      ["aero-jersey-45", ["graphite", "violet", "lime"]],
+      ["terminal-tee", ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"]],
+      ["aero-jersey-45", ["bosque", "negro", "marino", "hueso", "vinotinto", "camel"]],
     ],
   },
   {
@@ -206,8 +236,8 @@ export const SECS: RoperoSection[] = [
 ];
 
 export const LOOK: [string, string][] = [
-  ["drop-zone-hoodie", "lime"],
-  ["exit-point-trouser", "graphite"],
+  ["drop-zone-hoodie", "carbon"],
+  ["exit-point-trouser", "carbon"],
 ];
 
 export const GUIDES: Record<string, { cols: string[]; rows: (string | number)[][] }> = {
