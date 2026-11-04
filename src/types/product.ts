@@ -52,6 +52,7 @@ interface ProductBase {
   colors: ColorOption[];
   stock: number;
   technicalFeatures: string[];
+  gender?: "M" | "F";
 }
 
 export interface ClothingProduct extends ProductBase {
