@@ -7,6 +7,8 @@ export const DURATION = {
   panel: 0.3,
   sectionIn: 0.5,
   rackSettle: 0.45,
+  accordion: 0.3,
+  genderSwitch: 0.18,
 };
 
 export const SPRING_SETTLE = { type: "spring" as const, stiffness: 280, damping: 32, mass: 0.6 };
