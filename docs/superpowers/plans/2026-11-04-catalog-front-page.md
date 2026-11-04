@@ -992,19 +992,40 @@ describe("App catalog → product focus integration", () => {
 
 - [ ] **Step 3: Modify `src/components/dashboard/CategoryDashboard.tsx`**
 
+**Nota (hallazgo del reviewer de Task 10):** el archivo actual envuelve su grid en un
+`motion.div` con `gridVariants`/`itemVariants` (stagger fade+y al cargar la página,
+`useReducedMotion` respetado) — es la misma animación de entrada que Task 6 ya le pidió
+copiar a `ProductGrid`. `CatalogMenu` (Task 10) no la trae consigo a propósito (no era su
+alcance). Para no perderla al reemplazar el grid por `CatalogMenu`, conserva ese
+`motion.div` (con las mismas `gridVariants`/`itemVariants`/`useReducedMotion` que ya
+existen en este archivo hoy) envolviendo `<CatalogMenu />` en vez de envolver el grid
+estático de antes.
+
 Reemplaza el grid estático + `demo`/`DemoProductDialog` (ahora dentro de `CatalogMenu`)
-por:
+por algo equivalente a:
 
 ```tsx
 export function CategoryDashboard() {
+  const reduceMotion = useReducedMotion();
   return (
     <div className="flex flex-col gap-px bg-line">
-      <CatalogMenu />
+      <motion.div
+        variants={reduceMotion ? undefined : gridVariants}
+        initial={reduceMotion ? false : "hidden"}
+        animate="show"
+      >
+        <CatalogMenu />
+      </motion.div>
       <TechnicalGallery />
     </div>
   );
 }
 ```
+
+(mantén las constantes `gridVariants`/`itemVariants` ya definidas en este archivo tal
+cual están; `itemVariants` ya no tiene un `motion.div` individual por tarjeta que
+envolver desde aquí —eso vive dentro de `CatalogMenu`/`CategoryAccordion` ahora—, así
+que solo aplica el `gridVariants` de nivel superior al contenedor.)
 
 - [ ] **Step 4: Modify `src/App.tsx`**
 
