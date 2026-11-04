@@ -767,13 +767,23 @@ git commit -m "feat: add CategoryFlyout component"
 **Files:**
 - Create: `src/components/dashboard/CategoryAccordion.tsx`
 - Test: `src/components/dashboard/CategoryAccordion.test.tsx`
+- Modify: `src/components/dashboard/DashboardPanel.tsx` (ver nota abajo)
 
 **Interfaces:**
 - Consumes: `CategoryConfig`, `resolveCatalogSlice` (Task 2); `GenderSelector` (existente);
   `SubcategorySelector` (Task 7); `ProductGrid` (Task 6); `CategoryFlyout`, `DURATION`
   (Task 8, `src/lib/motionTokens.ts`);
-  `DashboardPanel` (existente, para el chrome del trigger).
+  `DashboardPanel` (existente, para el chrome del trigger — ver modificación abajo).
 - Produces: `CategoryAccordion({ category: CategoryConfig, isOpen: boolean, onToggle: () => void })`.
+
+**Nota (hallazgo al preparar esta tarea):** `DashboardPanel`'s `as="button"` variant hoy
+solo acepta `onClick`/`ariaLabel` — no hay forma de pasarle `aria-expanded`/`aria-controls`,
+que este trigger necesita. Antes de implementar `CategoryAccordion`, agrega dos props
+opcionales a `DashboardPanelProps` en `src/components/dashboard/DashboardPanel.tsx`:
+`ariaExpanded?: boolean` y `ariaControls?: string`, aplicados solo en la rama `as==="button"`
+del `<button>` existente (`aria-expanded={ariaExpanded}` `aria-controls={ariaControls}`,
+ambos `undefined` por defecto — no cambia el comportamiento de ningún llamador existente:
+`CategoryProductCard`, `AccessoriesPanel`). No toques nada más de ese archivo.
 
 - [ ] **Step 1: Write the failing tests**
 
