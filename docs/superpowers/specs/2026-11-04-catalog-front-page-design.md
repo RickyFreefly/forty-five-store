@@ -84,9 +84,10 @@ sus grids mostrarán estado vacío en todas las combinaciones. "Prendas Superior
 | Componente | Responsabilidad |
 |---|---|
 | `CatalogMenu` | Reemplaza el grid estático de `CategoryDashboard`; orquesta qué acordeón está abierto (uno a la vez) y renderiza los 4 `CategoryAccordion` + el `AccessoriesPanel` sin cambios. |
-| `CategoryAccordion` | Chrome de acordeón reutilizable sobre `DashboardPanel` (header siempre visible, `aria-expanded`, rota el indicador, anima alto/opacidad 250-350ms). Dentro renderiza `GenderSelector` + (si aplica) `SubcategorySelector` + `ProductGrid`. |
+| `CategoryAccordion` | Trigger siempre visible sobre `DashboardPanel` (header, `aria-expanded`, `aria-controls`, indicador que rota). Al abrir, NO empuja contenido: despliega `CategoryFlyout` flotando encima de la página (ver §6.2.1). Dentro del flyout van `GenderSelector` + (si aplica) `SubcategorySelector` + `ProductGrid`. |
+| `CategoryFlyout` | Overlay posicionado (`position: absolute`/`fixed`, `z-index` por encima del resto), ancho igual a la columna del dashboard, alto propio sin afectar el grid hero+panel. Fondo/backdrop sutil clicable para cerrar; `Escape` cierra; cierra también si se abre otra categoría. Animación 250-350ms (opacidad + translateY leve), igual que el resto del motion del spec. |
 | `GenderSelector` | Ya existe, se reutiliza tal cual. |
-| `SubcategorySelector` | Fila de botones (como el patrón de tabs que ya tiene `StreetwearPanel`), con `aria-pressed`/`role="tablist"`. Solo lo usan Technical Suits y Streetwear. |
+| `SubcategorySelector` | Fila de botones con `aria-pressed`, mismo patrón que ya usa `StreetwearPanel` hoy (sin `role="tablist"` — el código actual no usa ese patrón en ningún lado y añadirlo exigiría tabindex itinerante; se mantiene consistente con lo que ya existe). Solo lo usan Technical Suits y Streetwear. |
 | `ProductGrid` | Recibe productos + capacidad de slots; pinta `ProductCard` por cada uno, rellena el resto visualmente como espacio libre (no placeholders falsos), y pagina si `productos.length > slots` disponibles por página. |
 | `ProductCard` | Imagen/visual, nombre, referencia (sku), precio si existe, disponibilidad (`stock`). Al hacer clic, abre el detalle real (ver §6.4). |
 | `EmptyCatalogState` | Mensaje honesto ("Próximamente" / "Sin prendas en esta combinación todavía"), consistente visualmente, sin inventar productos. |
@@ -94,6 +95,30 @@ sus grids mostrarán estado vacío en todas las combinaciones. "Prendas Superior
 `TechnicalSuitsPanel.tsx` y `StreetwearPanel.tsx` actuales se reemplazan por usos de
 `CategoryAccordion` con su config correspondiente (se elimina su lógica a medida,
 ya duplicada en el componente genérico).
+
+#### 6.2.1 Por qué flotante, no empuja contenido (decisión del usuario)
+
+`ShowroomHero` pone `HeroEditorial` y `CategoryDashboard` como dos columnas de una
+misma fila de grid (`align-items: stretch` por defecto). `HeroEditorial` no tiene
+alto máximo y ancla su titular abajo (`justify-end`) sobre una imagen `object-cover`;
+si la columna del catálogo creciera al abrir un acordeón (género + subcategoría +
+grid), la fila completa crecería y el titular del hero se movería. El spec prohíbe
+justo eso ("conservar la composición... sin saltos de layout"). Se evaluaron tres
+formas de contenerlo (alto máximo + scroll interno / flotante encima / dejar crecer
+el hero junto con el panel) y el usuario eligió **flotante**: el `CategoryFlyout` se
+despliega por encima del resto de la página sin participar en el alto de la fila del
+grid — el hero nunca se mueve, abrir o cerrar cualquier categoría es visualmente
+inerte para el resto de la página.
+
+**Mi llamada sobre dónde aplica lo flotante:** el problema de estiramiento solo
+existe en desktop — `ShowroomHero` solo pone hero y catálogo lado a lado desde `lg`
+(`grid lg:grid-cols-[56%_44%]`); por debajo de `lg` ya están apilados en una sola
+columna, así que no hay fila compartida que estirar. El spec pide explícitamente
+"accordion vertical" en mobile, que es más natural como empuje-de-contenido inline
+que como overlay flotante. Por eso `CategoryFlyout` solo flota desde `lg` hacia
+arriba; en mobile/tablet el mismo contenido se expande inline (empuja la página,
+sin el riesgo de layout que sí existe en desktop). Mismo componente, el modo de
+posicionamiento cambia por breakpoint.
 
 ### 6.3 Qué se muestra en cada categoría hoy
 
@@ -138,14 +163,18 @@ siempre `ClothingProduct`, no hace falta tocarlo esta vez; si más adelante un
 - Un acordeón abierto cierra los demás (estado único en `CatalogMenu`); segundo clic
   sobre el abierto lo cierra. Header de cada categoría siempre visible y con estado
   activo marcado visualmente.
-- `aria-expanded` en el trigger, `aria-controls` apuntando al panel, el panel con
-  `id` correspondiente; `role="tablist"`/`role="tab"` en `SubcategorySelector`
-  (mismo patrón que ya usa `StreetwearPanel`); foco visible con las clases
-  `focus-visible` que ya usa el resto del sitio.
-- Responsive: desktop conserva el grid 2/4 columnas actual; tablet/mobile colapsan a
-  columna única con el mismo acordeón (ya es el comportamiento implícito de
-  `grid-cols-2 lg:grid-cols-4`); grid de productos pasa a 1-2 columnas en mobile.
-  Sin scroll horizontal no intencional.
+- `aria-expanded` en el trigger, `aria-controls` apuntando al `CategoryFlyout`, el
+  flyout con `id` correspondiente; `SubcategorySelector` con `aria-pressed` (mismo
+  patrón que `GenderSelector`/`StreetwearPanel` hoy, sin `role="tablist"` — ver
+  §6.2); foco visible con las clases `focus-visible` que ya usa el resto del sitio;
+  `Escape` cierra el flyout y devuelve el foco al trigger.
+- Responsive: **corrección** — el grid actual (`grid-cols-2 lg:grid-cols-4`) es de 2
+  columnas desde el móvil más chico hasta `lg`, nunca de 1 columna; no colapsa solo.
+  `CatalogMenu` cambia esas clases a `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` para
+  que en móvil cada categoría ocupe el ancho completo (así el `CategoryFlyout`
+  también tiene espacio real para género + subcategoría + grid sin apretarse en una
+  columna de ~150px). Grid de productos dentro del flyout: 1 columna en móvil más
+  chico, 2 desde `sm`. Sin scroll horizontal no intencional.
 
 ### 6.6 Estado de carga/error
 
