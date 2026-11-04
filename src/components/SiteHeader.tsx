@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useCartStore, cartCount } from "../store/cart";
+import { ROPERO_URL } from "../lib/routes";
 
+// "#x" baja a una sección de la landing; "/ropero/" es una página propia.
 const LINKS = [
-  { href: "#inicio", label: "Trajes técnicos" },
-  { href: "#ropero", label: "El Ropero" },
-  { href: "#accesorios", label: "Accesorios" },
-  { href: "#filosofia", label: "Sobre Forty Five" },
+  { href: "#caida-libre", label: "Trajes técnicos" },
+  { href: ROPERO_URL, label: "El Ropero" },
 ];
+
+const onRoperoPage = () => window.location.pathname.startsWith(ROPERO_URL);
 
 function scrollToId(id: string) {
   document.querySelector(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -19,7 +21,9 @@ export function SiteHeader() {
   const openCart = useCartStore((s) => s.open);
   const count = cartCount(lines);
   const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState(LINKS[0].href);
+  const [active, setActive] = useState(() =>
+    onRoperoPage() ? ROPERO_URL : (LINKS.find((l) => l.href === window.location.hash)?.href ?? LINKS[0].href),
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -32,8 +36,16 @@ export function SiteHeader() {
   }, []);
 
   function go(href: string) {
-    setActive(href);
     setMobileOpen(false);
+    if (!href.startsWith("#")) {
+      if (!onRoperoPage()) window.location.assign(href);
+      return;
+    }
+    if (onRoperoPage()) {
+      window.location.assign(`/${href}`);
+      return;
+    }
+    setActive(href);
     scrollToId(href);
   }
 
@@ -52,10 +64,10 @@ export function SiteHeader() {
         }`}
       >
         <a
-          href="#inicio"
+          href="/#caida-libre"
           onClick={(e) => {
             e.preventDefault();
-            go("#inicio");
+            go("#caida-libre");
           }}
           className="flex items-center gap-2.5"
         >

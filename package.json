@@ -13,13 +13,11 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@types/three": "^0.149.0",
     "lucide-react": "^1.63.0",
     "motion": "^14.7.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.3",
-    "three": "^0.149.0",
     "zustand": "^5.0.16"
   },
   "devDependencies": {

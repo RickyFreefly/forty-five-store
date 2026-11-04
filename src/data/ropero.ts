@@ -1,47 +1,25 @@
-import { GRAPHITE, OFFWHITE, VIOLET, ORANGE, LIME } from "./colors";
-
 /**
- * Catálogo de "El Ropero" — la experiencia de riel 3D (ver src/components/ropero).
- * Es un subconjunto curado del catálogo real (src/data/products.ts): el motor 3D solo
- * sabe pintar siluetas de tee/hoodie/jogger/gorra, así que no todo el catálogo cabe aquí.
- * Precios, textos de impresión y nombres se reutilizan tal cual del catálogo oficial.
+ * Catálogo de "El Ropero" — el riel de prendas colgadas (ver src/components/rack).
+ * Subconjunto del catálogo real (src/data/products.ts) que tiene foto recortada de la prenda.
+ * Precios y nombres se reutilizan tal cual del catálogo oficial.
  */
 
-export type RoperoCat = "arriba" | "abajo" | "accesorio";
-export type RoperoPainterKey = "hoodie" | "teeOv" | "teeReg" | "jogger" | "cap";
-/** Set de fotos reales (de cp.html) a usar para la vista de frente. Sin esto, se pinta por código. */
+/** Set de fotos en public/images/ropero/<set>-<color>.webp (y <set>-<color>-espalda.webp si hay espalda). */
 export type RoperoPhotoSet = "hoodie" | "tee" | "polo" | "pant";
 
 export interface RoperoProduct {
   id: string;
   name: string;
-  short: string;
   price: number;
-  cat: RoperoCat;
-  type: RoperoPainterKey;
   badge: string;
+  photo: RoperoPhotoSet;
   colors: string[];
-  def: string;
   sizes: string[];
-  guide: "teeOv" | "teeReg" | "hoodie" | "jogger" | "cap";
   desc: string;
-  /** Si está presente, la vista de frente usa una foto real en vez de la silueta pintada. */
-  photo?: RoperoPhotoSet;
 }
 
-export const ROPERO_CFG = {
-  brand: "FORTY FIVE",
-  tagline: "DESAFÍA LA GRAVEDAD",
-  sub: "INDUMENTARIA TÉCNICA · EL ROPERO",
-};
-
-const PALETTE = [GRAPHITE, OFFWHITE, VIOLET, ORANGE, LIME];
-/**
- * Colores de las fotos reales (ver roperoPhotos.ts), tal cual existen en cp.html — no son
- * parte de la paleta oficial de FORTY FIVE (colors.ts), pero son los colores en que de
- * verdad fueron fotografiadas esas prendas, así que se muestran tal cual.
- */
-const PHOTO_COLORS: Record<string, [string, string]> = {
+/** Colores en que de verdad están fotografiadas las prendas. */
+export const COLORS: Record<string, [string, string]> = {
   hueso: ["Blanco hueso", "#ECE6D9"],
   negro: ["Negro", "#1E1E20"],
   jaspe: ["Gris jaspe", "#A7A6A2"],
@@ -61,189 +39,88 @@ const PHOTO_COLORS: Record<string, [string, string]> = {
   crema: ["Crema", "#EFDABF"],
   camel: ["Camel", "#B98A55"],
 };
-export const COLORS: Record<string, [string, string]> = {
-  ...Object.fromEntries(PALETTE.map((c) => [c.id, [c.name, c.hex] as [string, string]])),
-  ...PHOTO_COLORS,
-};
 
 export const SIZES = ["XS", "S", "M", "L", "XL"];
-export const SIZE_SCALE: Record<string, number> = { XS: 0.92, S: 0.96, M: 1, L: 1.04, XL: 1.08, Única: 1 };
 
 export const PRODUCTS: RoperoProduct[] = [
   {
-    id: "flow-line-tee",
-    name: "Flow Line Tee",
-    short: "Flow Line Tee",
-    price: 109900,
-    cat: "arriba",
-    type: "teeOv",
-    badge: "Más vendido",
-    colors: ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"],
-    def: "jaspe",
-    sizes: SIZES,
-    guide: "teeOv",
-    desc: "Camiseta técnica oversize de secado rápido con panel de malla en la espalda, trazada con las líneas de flujo aerodinámico de la marca.",
-  },
-  {
-    id: "terminal-tee",
-    name: "Terminal Tee",
-    short: "Terminal Tee",
-    price: 99900,
-    cat: "arriba",
-    type: "teeReg",
-    badge: "Básico",
-    colors: ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"],
-    def: "negro",
-    sizes: SIZES,
-    guide: "teeReg",
-    desc: "Algodón peinado de 220g con retícula técnica impresa. El básico de cada salida al hangar.",
-  },
-  {
-    id: "aero-jersey-45",
-    name: "Aero Jersey 45",
-    short: "Aero Jersey 45",
-    price: 169900,
-    cat: "arriba",
-    type: "teeReg",
-    badge: "Nuevo",
-    colors: ["bosque", "negro", "marino", "hueso", "vinotinto", "camel"],
-    def: "marino",
-    sizes: SIZES,
-    guide: "teeReg",
-    desc: "Jersey técnico de malla ligera con cortes de competición y vivos de contraste.",
-  },
-  {
     id: "drop-zone-hoodie",
     name: "Drop Zone Hoodie",
-    short: "Drop Zone Hoodie",
     price: 259900,
-    cat: "arriba",
-    type: "hoodie",
     badge: "Nuevo",
-    colors: ["oliva", "celeste", "naranja", "chicle", "verdeK", "cobalto", "negro", "fucsia", "crema", "marino", "cafe", "carbon"],
-    def: "negro",
+    photo: "hoodie",
+    colors: ["negro", "naranja", "carbon", "oliva", "celeste", "cobalto", "marino", "cafe", "crema", "chicle", "fucsia", "verdeK"],
     sizes: SIZES,
-    guide: "hoodie",
     desc: "Hoodie de felpa pesada con bolsillo canguro y capucha reforzada, para esperar el próximo manifiesto.",
+  },
+  {
+    id: "flow-line-tee",
+    name: "Flow Line Tee",
+    price: 109900,
+    badge: "Más vendido",
+    photo: "tee",
+    colors: ["jaspe", "hueso", "negro", "bosque", "vinotinto", "marino"],
+    sizes: SIZES,
+    desc: "Camiseta técnica oversize de secado rápido con panel de malla en la espalda.",
   },
   {
     id: "exit-point-trouser",
     name: "Exit Point Trouser",
-    short: "Exit Point Trouser",
     price: 189900,
-    cat: "abajo",
-    type: "jogger",
     badge: "Nuevo",
-    colors: ["camel", "arena", "cafe", "carbon", "marino", "negro"],
-    def: "carbon",
+    photo: "pant",
+    colors: ["carbon", "camel", "arena", "cafe", "marino", "negro"],
     sizes: SIZES,
-    guide: "jogger",
-    desc: "Jogger técnico con bolsillos de carga y puño ajustable. Se mueve contigo antes y después del salto.",
+    desc: "Pantalón técnico con pretina ajustable. Se mueve contigo antes y después del salto.",
   },
   {
-    id: "vector-cap",
-    name: "Vector Cap",
-    short: "Vector Cap",
-    price: 89900,
-    cat: "accesorio",
-    type: "cap",
-    badge: "Accesorio",
-    colors: ["graphite", "lime"],
-    def: "graphite",
-    sizes: ["Única"],
-    guide: "cap",
-    desc: "Gorra de six paneles con visera curva y bordado del sello 45. Ajuste trasero metálico.",
+    id: "aero-jersey-45",
+    name: "Aero Jersey 45",
+    price: 169900,
+    badge: "Nuevo",
+    photo: "polo",
+    colors: ["marino", "negro", "bosque", "hueso", "vinotinto", "camel"],
+    sizes: SIZES,
+    desc: "Jersey técnico de malla ligera con cortes de competición y vivos de contraste.",
   },
   {
-    id: "altitude-cap",
-    name: "Altitude Cap",
-    short: "Altitude Cap",
-    price: 79900,
-    cat: "accesorio",
-    type: "cap",
-    badge: "Accesorio",
-    colors: ["offwhite", "orange"],
-    def: "offwhite",
-    sizes: ["Única"],
-    guide: "cap",
-    desc: "Gorra trucker de malla transpirable, ideal para el calor de la zona de aterrizaje.",
+    id: "terminal-tee",
+    name: "Terminal Tee",
+    price: 99900,
+    badge: "Básico",
+    photo: "tee",
+    colors: ["negro", "hueso", "jaspe", "bosque", "vinotinto", "marino"],
+    sizes: SIZES,
+    desc: "Algodón peinado de 220g. El básico de cada salida al hangar.",
   },
 ];
 
 export const PROD: Record<string, RoperoProduct> = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
 
-export const PKEY: Record<string, RoperoPainterKey> = Object.fromEntries(PRODUCTS.map((p) => [p.id, p.type]));
+/** Lo que cuelga en el riel, de izquierda a derecha: producto + color con el que se muestra. */
+export const RACK: { productId: string; color: string }[] = [
+  { productId: "drop-zone-hoodie", color: "negro" },
+  { productId: "flow-line-tee", color: "jaspe" },
+  { productId: "exit-point-trouser", color: "carbon" },
+  { productId: "aero-jersey-45", color: "marino" },
+  { productId: "drop-zone-hoodie", color: "naranja" },
+  { productId: "terminal-tee", color: "negro" },
+  { productId: "flow-line-tee", color: "hueso" },
+  { productId: "exit-point-trouser", color: "camel" },
+  { productId: "drop-zone-hoodie", color: "celeste" },
+];
 
-/** Posición y tamaño del estampado al pecho (plano aplicado sobre la silueta pintada). */
-export const PRINT_AT: Record<string, { y: number; w: number; a: number; kind: "brand" | "cap"; label?: string }> = {
-  "flow-line-tee": { y: 0.25, w: 0.22, a: 0.8, kind: "brand", label: "FORTY FIVE" },
-  "terminal-tee": { y: 0.226, w: 0.2, a: 0.6, kind: "brand", label: "RESISTENCIA CERO" },
-  "aero-jersey-45": { y: 0.22, w: 0.2, a: 0.5, kind: "brand", label: "FORTY FIVE TEAM" },
-  "drop-zone-hoodie": { y: 0.26, w: 0.19, a: 0.55, kind: "brand", label: "DROP ZONE" },
-  "vector-cap": { y: 0.085, w: 0.09, a: 0.5, kind: "cap" },
-  "altitude-cap": { y: 0.085, w: 0.09, a: 0.5, kind: "cap" },
-};
+/**
+ * Fotos de espalda disponibles, como "<set>-<color>". Cuando agregues
+ * public/images/ropero/hoodie-negro-espalda.webp, añade "hoodie-negro" aquí y el botón
+ * "Espalda" se activa solo para esa prenda.
+ */
+export const BACK_PHOTOS = new Set<string>([]);
 
-export interface RoperoSection {
-  id: string;
-  name: string;
-  title: string;
-  sub?: string;
-  items?: [string, string[]][];
+export function photoUrl(product: RoperoProduct, color: string, side: "front" | "back" = "front") {
+  return `/images/ropero/${product.photo}-${color}${side === "back" ? "-espalda" : ""}.webp`;
 }
 
-export const SECS: RoperoSection[] = [
-  { id: "tienda", name: "El Ropero", title: "FORTY FIVE" },
-  {
-    id: "nuevo",
-    name: "Lo nuevo",
-    title: "Nuevo en el hangar",
-    sub: "Lo nuevo · Drop Zone",
-    items: [
-      ["drop-zone-hoodie", ["oliva", "celeste", "naranja", "chicle", "verdeK", "cobalto", "negro", "fucsia", "crema", "marino", "cafe", "carbon"]],
-      ["exit-point-trouser", ["camel", "arena", "cafe", "carbon", "marino", "negro"]],
-    ],
-  },
-  {
-    id: "top",
-    name: "Más vendidos",
-    title: "Más vendidos",
-    sub: "Lo que más se lleva",
-    items: [["flow-line-tee", ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"]]],
-  },
-  { id: "look", name: "Completa el look", title: "Completa el look", sub: "Arriba + abajo" },
-  {
-    id: "basicos",
-    name: "Básicos",
-    title: "Básicos técnicos",
-    sub: "Todos los días",
-    items: [
-      ["terminal-tee", ["bosque", "hueso", "jaspe", "vinotinto", "marino", "negro"]],
-      ["aero-jersey-45", ["bosque", "negro", "marino", "hueso", "vinotinto", "camel"]],
-    ],
-  },
-  {
-    id: "accesorios",
-    name: "Accesorios",
-    title: "Accesorios",
-    sub: "Gorras bordadas 45",
-    items: [
-      ["vector-cap", ["graphite", "lime"]],
-      ["altitude-cap", ["offwhite", "orange"]],
-    ],
-  },
-  { id: "pedido", name: "Tu pedido", title: "Tu pedido", sub: "Lo que elegiste" },
-];
-
-export const LOOK: [string, string][] = [
-  ["drop-zone-hoodie", "carbon"],
-  ["exit-point-trouser", "carbon"],
-];
-
-export const GUIDES: Record<string, { cols: string[]; rows: (string | number)[][] }> = {
-  teeOv: { cols: ["Talla", "Ancho de pecho", "Largo", "Manga"], rows: [["XS", 54, 68, 22], ["S", 57, 70, 23], ["M", 60, 72, 24], ["L", 63, 74, 25], ["XL", 66, 76, 26]] },
-  teeReg: { cols: ["Talla", "Ancho de pecho", "Largo", "Manga"], rows: [["XS", 46, 64, 18], ["S", 49, 66, 19], ["M", 52, 69, 20], ["L", 55, 72, 21], ["XL", 58, 74, 22]] },
-  hoodie: { cols: ["Talla", "Ancho de pecho", "Largo", "Manga"], rows: [["XS", 56, 66, 58], ["S", 59, 68, 60], ["M", 62, 70, 62], ["L", 65, 72, 63], ["XL", 68, 74, 64]] },
-  jogger: { cols: ["Talla", "Cintura relajada", "Cadera", "Largo"], rows: [["XS", 64, 98, 96], ["S", 68, 102, 98], ["M", 72, 106, 100], ["L", 78, 112, 102], ["XL", 84, 118, 104]] },
-  cap: { cols: ["Talla", "Contorno de cabeza"], rows: [["Única", "54 a 60 (correa ajustable)"]] },
-};
+export function hasBack(product: RoperoProduct, color: string) {
+  return BACK_PHOTOS.has(`${product.photo}-${color}`);
+}

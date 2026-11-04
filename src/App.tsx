@@ -1,44 +1,17 @@
-import { AnimatePresence } from "motion/react";
 import { SiteHeader } from "./components/SiteHeader";
-import { ShowroomHero } from "./components/ShowroomHero";
 import { FreefallSection } from "./components/FreefallSection";
-import { RoperoSection } from "./components/ropero/RoperoSection";
-import { BrandPhilosophy } from "./components/BrandPhilosophy";
-import { AccessoriesPreview } from "./components/AccessoriesPreview";
-import { ProductFocusView } from "./components/ProductFocusView";
 import { CartDrawer } from "./components/CartDrawer";
-import { Footer } from "./components/Footer";
-import { useProductFocusStore } from "./store/productFocus";
+import { goToRopero } from "./lib/routes";
 
-function scrollTo(id: string) {
-  document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
-}
-
+/** La landing es solo el motion design de la caída libre; la tienda vive en /ropero/. */
 function App() {
-  const product = useProductFocusStore((s) => s.product);
-  const closeProductFocus = useProductFocusStore((s) => s.close);
-
   return (
     <div className="min-h-screen bg-ink">
       <SiteHeader />
 
-      <ShowroomHero onExplore={() => scrollTo("#ropero")} onDiscover={() => scrollTo("#filosofia")} />
-
-      <FreefallSection onShop={() => scrollTo("#ropero")} />
-
-      <RoperoSection />
-
-      <AccessoriesPreview />
-
-      <BrandPhilosophy />
-
-      <Footer />
+      <FreefallSection onShop={goToRopero} />
 
       <CartDrawer />
-
-      <AnimatePresence>
-        {product ? <ProductFocusView product={product} onClose={closeProductFocus} /> : null}
-      </AnimatePresence>
     </div>
   );
 }

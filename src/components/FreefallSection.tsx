@@ -6,7 +6,7 @@ import { CoordinateTag } from "./brand/BrandMotifs";
 import { EXIT_ALTITUDE_M, formatAltitude, progressToAltitude } from "../lib/scrollSequence";
 
 /** Frames in public/sequences/caida — update when the real video is extracted (see its README). */
-const FRAME_COUNT = 30;
+const FRAME_COUNT = 72;
 const DEPLOY_ALTITUDE_M = 1500;
 
 // White copy straight on the footage: a soft shadow instead of a heavy overlay.
@@ -35,13 +35,14 @@ export function FreefallSection({ onShop }: FreefallSectionProps) {
     >
       {(progress) => (
         <>
-          {/* Soft edge scrims so copy and altimeter stay legible on bright sky — not a full overlay. */}
+          {/* Soft edge scrims so copy and altimeter stay legible on bright sky — not a full overlay.
+              Both live on the left: the skydiver is framed on the right of every shot. */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink/70 via-ink/15 to-transparent lg:via-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-ink/45 to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink/55 to-transparent" />
           <Altimeter progress={progress} />
 
-          <Phase progress={progress} range={[0, 0.04, 0.22, 0.3]} className="items-end pb-20 sm:pb-24">
+          {/* Es lo primero de la landing: visible desde el scroll 0, sin esperar a entrar. */}
+          <Phase progress={progress} range={[-1, 0, 0.22, 0.3]} className="items-end pb-20 sm:pb-24">
             <CoordinateTag label="Salida · 4.000 m" />
             <h2 className={`mt-4 text-[clamp(2.2rem,5.5vw,4rem)] leading-[0.95] text-paper ${ON_FOOTAGE}`}>
               Hecho para
@@ -105,7 +106,7 @@ function Phase({ progress, range, className, children }: PhaseProps) {
   return (
     <motion.div
       style={{ opacity, y, visibility }}
-      className={`pointer-events-none absolute inset-0 flex px-6 pr-24 sm:px-10 sm:pr-32 lg:px-16 ${className ?? ""}`}
+      className={`pointer-events-none absolute inset-0 flex pr-6 pl-24 sm:pr-10 sm:pl-40 lg:pr-16 lg:pl-48 ${className ?? ""}`}
     >
       <div className="max-w-xl">{children}</div>
     </motion.div>
@@ -149,39 +150,39 @@ function Altimeter({ progress }: { progress: MotionValue<number> }) {
 
   return (
     <div
-      className="pointer-events-none absolute top-1/2 right-3 flex h-[56svh] -translate-y-1/2 items-stretch gap-2 sm:right-8 sm:gap-3"
+      className="pointer-events-none absolute top-1/2 left-3 flex h-[56svh] -translate-y-1/2 items-stretch gap-2 sm:left-8 sm:gap-3"
       role="group"
       aria-label="Altímetro"
     >
-      <div className="flex flex-col items-end justify-between py-0.5">
+      <div className="relative w-6">
+        <div className="absolute inset-y-0 left-0 w-px bg-paper/40" />
+        {ALTIMETER_TICKS.map((alt) => (
+          <div
+            key={alt}
+            className="absolute left-0 flex -translate-y-1/2 items-center gap-1"
+            style={{ top: `${(1 - alt / EXIT_ALTITUDE_M) * 100}%` }}
+          >
+            <span className={`h-px ${alt === DEPLOY_ALTITUDE_M ? "w-4 bg-orange" : "w-2.5 bg-paper/60"}`} />
+            {alt === DEPLOY_ALTITUDE_M ? (
+              <span className="font-display hidden text-[8px] tracking-[0.15em] text-orange uppercase sm:inline">Apertura</span>
+            ) : null}
+          </div>
+        ))}
+        <motion.div
+          style={{ top: markerTop }}
+          className="absolute left-0 h-0.5 w-6 -translate-y-1/2 bg-accent shadow-[0_0_10px_rgba(218,255,4,0.6)]"
+        />
+      </div>
+
+      <div className="flex flex-col items-start justify-between py-0.5">
         <span className="font-display text-[9px] tracking-[0.2em] text-paper/60 uppercase">Alt</span>
-        <span className={`font-display tnum text-right text-paper ${ON_FOOTAGE}`}>
+        <span className={`font-display tnum text-left text-paper ${ON_FOOTAGE}`}>
           <span ref={readoutRef} className="block text-lg leading-none font-bold sm:text-3xl">
             {formatAltitude(progressToAltitude(progress.get()))}
           </span>
           <span className="text-[9px] tracking-[0.2em] text-paper/70 uppercase sm:text-[10px]">metros</span>
         </span>
         <span className="font-display text-[9px] tracking-[0.2em] text-paper/60 uppercase">MSL</span>
-      </div>
-
-      <div className="relative w-6">
-        <div className="absolute inset-y-0 right-0 w-px bg-paper/40" />
-        {ALTIMETER_TICKS.map((alt) => (
-          <div
-            key={alt}
-            className="absolute right-0 flex -translate-y-1/2 items-center gap-1"
-            style={{ top: `${(1 - alt / EXIT_ALTITUDE_M) * 100}%` }}
-          >
-            {alt === DEPLOY_ALTITUDE_M ? (
-              <span className="font-display hidden text-[8px] tracking-[0.15em] text-orange uppercase sm:inline">Apertura</span>
-            ) : null}
-            <span className={`h-px ${alt === DEPLOY_ALTITUDE_M ? "w-4 bg-orange" : "w-2.5 bg-paper/60"}`} />
-          </div>
-        ))}
-        <motion.div
-          style={{ top: markerTop }}
-          className="absolute right-0 h-0.5 w-6 -translate-y-1/2 bg-accent shadow-[0_0_10px_rgba(218,255,4,0.6)]"
-        />
       </div>
     </div>
   );

@@ -1,10 +1,12 @@
 # Secuencia "caída libre"
 
-Los 30 frames actuales son **provisionales**: zoom y desplazamiento generados a partir de
-`public/images/hero/skydiver-demo.webp`. Se reemplazan por los frames de un video real.
+Los 72 frames actuales salen de las **5 imágenes clave** de `assets-src/caida/` (puerta, caída,
+traje de cerca, paracaídas, aterrizaje): cada una con un zoom lento y fundidos entre ellas.
+Se regeneran con `python3 scripts/build-caida-frames.py` (necesita Pillow). Cuando tengas el
+video de Veo, reemplázalos por sus frames con los pasos de abajo.
 
 - `0001.webp … NNNN.webp` → escritorio (1600 px de ancho)
-- `mobile/0001.webp … NNNN.webp` → móvil (900 px de ancho, mismos nombres y misma cantidad)
+- `mobile/0001.webp … NNNN.webp` → móvil (recorte vertical de 558×900 px centrado en el paracaidista, mismos nombres y misma cantidad)
 
 La sección (`src/components/FreefallSection.tsx`) los dibuja en un canvas según el scroll.
 
@@ -42,7 +44,7 @@ ffmpeg -i caida.mp4 -vf "fps=24,scale=1600:-1" -q:v 80 public/sequences/caida/%0
 ```
 
 ```bash
-ffmpeg -i caida.mp4 -vf "fps=24,scale=900:-1" -q:v 75 public/sequences/caida/mobile/%04d.webp
+ffmpeg -i caida.mp4 -vf "fps=24,crop=ih*0.62:ih:iw*0.72-ih*0.31:0,scale=-2:900" -q:v 75 public/sequences/caida/mobile/%04d.webp
 ```
 
 ## 3. Actualizar la cantidad de frames
