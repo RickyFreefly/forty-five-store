@@ -1,5 +1,9 @@
 # Prompts para las fotos de El Ropero (frente y espalda)
 
+> **Diseños actuales:** las 9 prendas de la propuesta salen de «Propuesta Camisetas FINAL.pdf» con
+> `python3 scripts/extract-propuesta.py` (necesita pikepdf, scipy, Pillow y poppler). Cuando lleguen los PNG del diseñador, reemplaza los
+> `.webp` de `public/images/ropero/` con el mismo nombre y no hay que tocar el código.
+
 El riel (`src/components/rack/RackShowcase.tsx`) muestra cada prenda como una foto recortada
 sobre fondo transparente; el gancho lo dibuja la web. Las fotos actuales vienen del prototipo
 `cp.html`: solo frente, y los hoodies son pequeños (unos 340 px) y tenían el logo de otra marca

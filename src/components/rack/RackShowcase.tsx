@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { COLORS, PROD, RACK, hasView, photoUrl, type RoperoPhotoSet, type RoperoProduct, type RoperoView } from "../../data/ropero";
+import { COLORS, PROD, RACK, hasView, photoUrl, type RoperoKind, type RoperoProduct, type RoperoView } from "../../data/ropero";
 import { formatCOP } from "../../data/products";
 import { useCartStore } from "../../store/cart";
 import { EASE_OUT, SPRING_SETTLE } from "../../lib/motionTokens";
@@ -13,7 +13,7 @@ import { EASE_OUT, SPRING_SETTLE } from "../../lib/motionTokens";
  */
 
 // Alto de cada prenda colgada, relativo al alto base del riel (los pantalones cuelgan más largo).
-const HANG: Record<RoperoPhotoSet, number> = { hoodie: 0.9, tee: 0.92, polo: 0.92, pant: 1.45 };
+const HANG: Record<RoperoKind, number> = { hoodie: 0.9, tee: 0.86, longsleeve: 0.98, pant: 1.45 };
 
 const garmentId = (i: number) => `garment-${i}`;
 
@@ -66,8 +66,7 @@ export function RackShowcase() {
         >
           <p className="font-display text-[11px] tracking-[0.28em] text-ink/50 uppercase">El Ropero · Drop 01</p>
           <p className="mt-2 text-sm text-ink/60">
-            <span className="lg:hidden">Desliza el riel y toca</span>
-            <span className="hidden lg:inline">Toca</span> una prenda para verla de cerca
+            Desliza el riel y toca una prenda para verla de cerca
           </p>
         </motion.div>
 
@@ -103,14 +102,14 @@ export function RackShowcase() {
                   <Hanger className="h-7 w-16 sm:h-8 sm:w-20" />
                   {focus === i ? (
                     // Hueco del mismo tamaño mientras la prenda está en el centro.
-                    <span style={{ height: `calc(var(--rack-h) * ${HANG[product.photo]})` }} className="block aspect-[0.6]" />
+                    <span style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }} className="block aspect-[0.6]" />
                   ) : (
                     <motion.img
                       layoutId={garmentId(i)}
                       src={photoUrl(product, item.color)}
                       alt=""
                       draggable={false}
-                      style={{ height: `calc(var(--rack-h) * ${HANG[product.photo]})` }}
+                      style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }}
                       className="-mt-1 w-auto object-contain drop-shadow-[0_10px_14px_rgba(33,31,32,0.18)] select-none"
                       transition={{ duration: 0.55, ease: EASE_OUT }}
                     />
@@ -185,7 +184,7 @@ function FocusContent({ index, product, initialColor }: { index: number; product
   const [size, setSize] = useState<string | null>(null);
   const addItem = useCartStore((s) => s.addItem);
   const reduceMotion = useReducedMotion();
-  const tall = product.photo === "pant";
+  const tall = product.kind === "pant";
 
   function add() {
     if (!size) return;
@@ -228,7 +227,7 @@ function FocusContent({ index, product, initialColor }: { index: number; product
 
         <div role="group" aria-label="Vista" className="flex rounded-full border border-ink/15 p-0.5 text-[11px] font-semibold tracking-[0.12em] uppercase">
           {VIEWS.map((v) => {
-            const disabled = !hasView(product, color, v.id);
+            const disabled = !hasView(product, v.id);
             return (
               <button
                 key={v.id}
@@ -256,11 +255,8 @@ function FocusContent({ index, product, initialColor }: { index: number; product
               aria-checked={color === c}
               aria-label={COLORS[c][0]}
               title={COLORS[c][0]}
-              onClick={() => {
-                setColor(c);
-                // Conserva la vista si ese color la tiene; si no, vuelve al frente.
-                if (!hasView(product, c, side)) setSide("front");
-              }}
+              // Las vistas son las mismas en todos los colores: cambiar de color no cambia de vista.
+              onClick={() => setColor(c)}
               style={{ backgroundColor: COLORS[c][1] }}
               className={`h-6 w-6 rounded-full border border-ink/20 transition focus-visible:outline-none ${
                 color === c ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : "hover:scale-110 focus-visible:ring-2 focus-visible:ring-orange"
