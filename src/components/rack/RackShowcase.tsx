@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { COLORS, PROD, RACK, hasView, photoUrl, type RoperoKind, type RoperoProduct, type RoperoView } from "../../data/ropero";
@@ -16,6 +16,12 @@ import { EASE_OUT, SPRING_SETTLE } from "../../lib/motionTokens";
 const HANG: Record<RoperoKind, number> = { hoodie: 0.9, tee: 0.86, longsleeve: 0.98, pant: 1.45 };
 
 const garmentId = (i: number) => `garment-${i}`;
+
+// Ancho del gancho en la vista de cerca.
+const FOCUS_HOOK = "min(4.2vh,38px)";
+
+// Péndulo poco amortiguado: la prenda oscila un par de veces antes de quedar quieta.
+const SWING = { type: "spring" as const, stiffness: 90, damping: 7, mass: 0.8 };
 
 const VIEWS: { id: RoperoView; label: string; alt: string }[] = [
   { id: "front", label: "Frente", alt: "de frente" },
@@ -72,10 +78,16 @@ export function RackShowcase() {
 
         {/* Riel */}
         <div className="absolute inset-x-0 top-[22%]">
-          <div className="mx-auto h-1.5 w-[94%] max-w-[1320px] rounded-full bg-gradient-to-b from-metal to-metal-dark shadow-[0_2px_6px_rgba(33,31,32,0.25)]" />
+          {/* El riel va por delante de los ganchos: así cada gancho parece rodearlo. */}
+          {/* Con una prenda en el centro el riel se desvanece: de cerca solo quedan la prenda y su gancho. */}
+          <motion.div
+            animate={{ opacity: focus === null ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="relative z-20 mx-auto h-1.5 w-[94%] max-w-[1320px] rounded-full bg-gradient-to-b from-metal to-metal-dark shadow-[0_2px_6px_rgba(33,31,32,0.25)]"
+          />
           <div
             ref={railRef}
-            className="mx-auto -mt-1 flex max-w-[1320px] snap-x snap-mandatory items-start justify-center-safe gap-3 overflow-x-auto px-[6%] pb-8 [scrollbar-width:none] sm:gap-4 lg:px-[3%]"
+            className="mx-auto -mt-[11px] flex max-w-[1320px] snap-x snap-mandatory items-start justify-center-safe gap-3 overflow-x-auto px-[6%] pb-8 [scrollbar-width:none] sm:gap-4 lg:px-[3%]"
           >
             {RACK.map((item, i) => {
               const product = PROD[item.productId];
@@ -86,34 +98,41 @@ export function RackShowcase() {
                   type="button"
                   onClick={() => setFocus(i)}
                   aria-label={`${product.name}, ${COLORS[item.color][0]}`}
-                  initial={reduceMotion ? false : { opacity: 0, y: -28 }}
+                  // Cae al riel y se mece desde el gancho hasta quedar quieta.
+                  initial={reduceMotion ? false : { opacity: 0, y: -28, rotate: i % 2 ? 7 : -7 }}
                   animate={{
                     // La prenda enfocada deja su lugar vacío (gancho incluido) mientras está en el centro.
                     opacity: focus === i ? 0 : dimmed ? 0.35 : 1,
                     y: 0,
+                    rotate: 0,
                     filter: dimmed ? "blur(6px)" : "blur(0px)",
                     scale: dimmed ? 0.94 : 1,
                   }}
-                  transition={{ ...SPRING_SETTLE, delay: focus === null && !reduceMotion ? 0.05 * i : 0 }}
+                  transition={{
+                    ...SPRING_SETTLE,
+                    rotate: SWING,
+                    delay: focus === null && !reduceMotion ? 0.05 * i : 0,
+                  }}
                   whileHover={reduceMotion || focus !== null ? undefined : { rotate: 2.5 }}
                   style={{ transformOrigin: "50% 0%" }}
                   className="group flex shrink-0 snap-center flex-col items-center rounded-lg focus-visible:ring-2 focus-visible:ring-orange focus-visible:outline-none"
                 >
-                  <Hanger className="h-7 w-16 sm:h-8 sm:w-20" />
-                  {focus === i ? (
-                    // Hueco del mismo tamaño mientras la prenda está en el centro.
-                    <span style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }} className="block aspect-[0.6]" />
-                  ) : (
-                    <motion.img
-                      layoutId={garmentId(i)}
-                      src={photoUrl(product, item.color)}
-                      alt=""
-                      draggable={false}
-                      style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }}
-                      className="-mt-1 w-auto object-contain drop-shadow-[0_10px_14px_rgba(33,31,32,0.18)] select-none"
-                      transition={{ duration: 0.55, ease: EASE_OUT }}
-                    />
-                  )}
+                  <HangingGarment hookWidth="calc(var(--rack-h) * 0.1)">
+                    {focus === i ? (
+                      // Hueco del mismo tamaño mientras la prenda está en el centro.
+                      <span style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }} className="block aspect-[0.6]" />
+                    ) : (
+                      <motion.img
+                        layoutId={garmentId(i)}
+                        src={photoUrl(product, item.color)}
+                        alt=""
+                        draggable={false}
+                        style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }}
+                        className="relative w-auto object-contain drop-shadow-[0_10px_14px_rgba(33,31,32,0.18)] select-none"
+                        transition={{ duration: 0.55, ease: EASE_OUT }}
+                      />
+                    )}
+                  </HangingGarment>
                 </motion.button>
               );
             })}
@@ -183,7 +202,6 @@ function FocusContent({ index, product, initialColor }: { index: number; product
   const [side, setSide] = useState<RoperoView>("front");
   const [size, setSize] = useState<string | null>(null);
   const addItem = useCartStore((s) => s.addItem);
-  const reduceMotion = useReducedMotion();
   const tall = product.kind === "pant";
 
   function add() {
@@ -196,21 +214,19 @@ function FocusContent({ index, product, initialColor }: { index: number; product
 
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-14 pt-4 pb-6 sm:gap-6">
-      <div className="relative flex flex-col items-center">
-        <Hanger className="h-9 w-24" />
+      <HangingGarment hookWidth={FOCUS_HOOK}>
         <motion.img
           layoutId={garmentId(index)}
           key={`${color}-${side}`}
           src={photoUrl(product, color, side)}
           alt={`${product.name} en ${COLORS[color][0]}, ${VIEWS.find((v) => v.id === side)?.alt}`}
           draggable={false}
-          className={`-mt-1 w-auto object-contain drop-shadow-[0_18px_24px_rgba(33,31,32,0.22)] select-none ${
+          className={`relative w-auto object-contain drop-shadow-[0_18px_24px_rgba(33,31,32,0.22)] select-none ${
             tall ? "h-[min(46vh,420px)]" : "h-[min(36vh,340px)]"
           }`}
           transition={{ duration: 0.55, ease: EASE_OUT }}
         />
-        <HangTags price={formatCOP(product.price)} badge={product.badge} swing={!reduceMotion} />
-      </div>
+      </HangingGarment>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -311,35 +327,33 @@ function ArrowButton({ side, onClick }: { side: "left" | "right"; onClick: () =>
   );
 }
 
-/** Dos etiquetas colgando del gancho que se mecen, como las del reel. */
-function HangTags({ price, badge, swing }: { price: string; badge: string; swing: boolean }) {
-  const sway = (delay: number) =>
-    swing
-      ? { animate: { rotate: [-5, 5, -5] }, transition: { duration: 3.2, repeat: Infinity, ease: "easeInOut" as const, delay } }
-      : {};
+
+/**
+ * La prenda colgada de verdad: el gancho entra por el cuello y su base queda detrás de la foto.
+ * Los brazos del gancho van por dentro de la prenda, así que solo se ve el gancho, como en un
+ * ropero real; en el riel, la parte de arriba lo rodea.
+ */
+function HangingGarment({ hookWidth, children }: { hookWidth: string; children: ReactNode }) {
   return (
-    <div aria-hidden="true" className="absolute top-8 left-[calc(100%-8px)] flex gap-1.5">
-      <motion.div {...sway(0)} style={{ transformOrigin: "50% 0%" }} className="flex flex-col items-center">
-        <span className="h-4 w-px bg-ink/40" />
-        <span className="flex h-12 w-7 flex-col items-center justify-center rounded-sm bg-ink font-display text-[11px] font-bold text-paper">45</span>
-      </motion.div>
-      {/* En pantallas angostas no cabe junto a la prenda; el precio ya está debajo. */}
-      <motion.div {...sway(0.4)} style={{ transformOrigin: "50% 0%" }} className="mt-2 hidden flex-col items-center sm:flex">
-        <span className="h-3 w-px bg-ink/40" />
-        <span className="flex w-14 flex-col items-center rounded-sm border border-ink/15 bg-white px-1 py-1.5 text-center">
-          <span className="text-[7px] tracking-[0.14em] text-orange uppercase">{badge}</span>
-          <span className="tnum mt-0.5 text-[9px] font-semibold text-ink">{price}</span>
-        </span>
-      </motion.div>
+    <div className="relative flex flex-col items-center" style={{ paddingTop: `calc(${hookWidth} * ${HOOK_VISIBLE})` }}>
+      <Hook style={{ width: hookWidth }} className="absolute top-0 left-1/2 -translate-x-1/2" />
+      {children}
     </div>
   );
 }
 
-function Hanger({ className = "" }: { className?: string }) {
+// Alto del gancho / ancho (viewBox 24×40), menos el tramo que se esconde detrás del cuello.
+const HOOK_VISIBLE = (40 / 24) * 0.82;
+
+function Hook({ className = "", style }: { className?: string; style?: CSSProperties }) {
   return (
-    <svg viewBox="0 0 80 32" fill="none" aria-hidden="true" className={`relative z-10 text-metal-dark ${className}`}>
-      <path d="M40 12c0-3 2.6-4.2 2.6-6.6A2.6 2.6 0 0 0 40 2.8a2.6 2.6 0 0 0-2.6 2.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M40 12 6 29h68L40 12Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 40" fill="none" aria-hidden="true" style={style} className={`text-metal-dark ${className}`}>
+      <path
+        d="M12 40V18.5c0-2.8 1.7-3.9 3.6-5.6 1.9-1.6 2.8-3.3 2.8-5.2A6.4 6.4 0 0 0 12 1.3a6.4 6.4 0 0 0-6.4 6.4"
+        stroke="currentColor"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
