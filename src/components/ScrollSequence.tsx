@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useMotionValueEvent, useReducedMotion, useScroll, useSpring, type MotionValue } from "motion/react";
-import { coverRect, nearestLoaded, preloadOrder, progressToFrame } from "../lib/scrollSequence";
+import { fitRect, nearestLoaded, preloadOrder, progressToFrame } from "../lib/scrollSequence";
 
 interface ScrollSequenceProps {
   /** Folder under /public holding 0001.webp … NNNN.webp, e.g. "/sequences/caida". */
   basePath: string;
-  /** Lighter frames for narrow screens (same count and naming). Falls back to basePath. */
-  mobileBasePath?: string;
+  /** Where the subject sits horizontally (0..1) at a given progress; narrow screens keep it in view. */
+  focusX?: (progress: number) => number;
   frameCount: number;
   extension?: string;
   /** Total section height in vh — more height = slower scrub. */
@@ -21,6 +21,9 @@ interface ScrollSequenceProps {
 }
 
 const PRELOAD_CONCURRENCY = 6;
+// --color-ink, painted behind the frame where it does not cover the screen.
+const INK = "#211f20";
+const INK_CLEAR = "rgba(33,31,32,0)";
 const MAX_DPR = 2;
 
 function frameUrl(basePath: string, index: number, extension: string) {
@@ -34,7 +37,7 @@ function frameUrl(basePath: string, index: number, extension: string) {
  */
 export function ScrollSequence({
   basePath,
-  mobileBasePath,
+  focusX,
   frameCount,
   extension = "webp",
   heightVh = 400,
@@ -50,12 +53,6 @@ export function ScrollSequence({
   const rafRef = useRef(0);
   const reduceMotion = useReducedMotion();
 
-  const [path] = useState(() =>
-    mobileBasePath && typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches
-      ? mobileBasePath
-      : basePath,
-  );
-
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   // Critically damped (c = 2√(k·m)): smooths wheel steps and settles without overshoot when the scroll stops.
   const progress = useSpring(scrollYProgress, { stiffness: 160, damping: 16, mass: 0.4, restDelta: 0.0001 });
@@ -69,25 +66,46 @@ export function ScrollSequence({
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    const f = reduceMotion ? staticFrame : progressToFrame(progressRef.current.get(), frameCount);
+    const p = progressRef.current.get();
+    const f = reduceMotion ? staticFrame : progressToFrame(p, frameCount);
     const i0 = Math.floor(f);
     const i1 = Math.min(i0 + 1, frameCount - 1);
     const t = f - i0;
     const base = nearestLoaded(i0, loadedRef.current);
     if (base < 0) return;
 
+    const img0 = imagesRef.current[base]!;
+    const r = fitRect(img0.naturalWidth, img0.naturalHeight, canvas.width, canvas.height, {
+      focusX: focusX?.(reduceMotion ? 0 : p) ?? 0.5,
+    });
     const paint = (index: number, alpha: number) => {
       const img = imagesRef.current[index];
       if (!img) return;
-      const r = coverRect(img.naturalWidth, img.naturalHeight, canvas.width, canvas.height);
       ctx.globalAlpha = alpha;
       ctx.drawImage(img, r.dx, r.dy, r.dw, r.dh);
     };
 
+    ctx.fillStyle = INK;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     paint(base, 1);
     // Crossfade into the next frame for in-between scroll positions.
     if (t > 0.001 && i1 !== base && loadedRef.current[i1]) paint(i1, t);
     ctx.globalAlpha = 1;
+
+    // Narrow screens leave bands above and below the frame: fade the photo's edges into them.
+    if (r.dy > 0.5) {
+      const fade = Math.min(r.dh * 0.22, canvas.height * 0.12);
+      for (const [from, to] of [
+        [r.dy, r.dy + fade],
+        [r.dy + r.dh, r.dy + r.dh - fade],
+      ]) {
+        const g = ctx.createLinearGradient(0, from, 0, to);
+        g.addColorStop(0, INK);
+        g.addColorStop(1, INK_CLEAR);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, Math.min(from, to) - 1, canvas.width, fade + 2);
+      }
+    }
   };
   const drawRef = useRef(draw);
   drawRef.current = draw;
@@ -133,7 +151,7 @@ export function ScrollSequence({
         if (index === undefined || cancelled) return;
         const img = new Image();
         img.decoding = "async";
-        img.src = frameUrl(path, index, extension);
+        img.src = frameUrl(basePath, index, extension);
         img
           .decode()
           .then(() => {
@@ -172,7 +190,7 @@ export function ScrollSequence({
       rafRef.current = 0;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, frameCount, extension, reduceMotion, staticFrame]);
+  }, [basePath, frameCount, extension, reduceMotion, staticFrame]);
 
   return (
     <section ref={sectionRef} id={id} className="relative bg-ink" style={{ height: `${heightVh}svh` }}>

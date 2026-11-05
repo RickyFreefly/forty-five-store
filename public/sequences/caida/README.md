@@ -5,10 +5,12 @@ traje de cerca, paracaídas, aterrizaje): cada una con un zoom lento y fundidos 
 Se regeneran con `python3 scripts/build-caida-frames.py` (necesita Pillow). Cuando tengas el
 video de Veo, reemplázalos por sus frames con los pasos de abajo.
 
-- `0001.webp … NNNN.webp` → escritorio (1600 px de ancho)
-- `mobile/0001.webp … NNNN.webp` → móvil (recorte vertical de 558×900 px centrado en el paracaidista, mismos nombres y misma cantidad)
+- `0001.webp … NNNN.webp` → 1600 px de ancho, los mismos para todas las pantallas
 
-La sección (`src/components/FreefallSection.tsx`) los dibuja en un canvas según el scroll.
+La sección (`src/components/FreefallSection.tsx`) los dibuja en un canvas según el scroll. En
+pantallas anchas llenan todo; en celulares y tablets verticales se alejan lo justo para que se
+vea el paracaidista completo, con bandas oscuras arriba y abajo, y el recorte lo sigue según
+`SUBJECT_X`. Si en el video nuevo el paracaidista cambia de lugar, ajusta `SUBJECT_X`.
 
 ## 1. El video que hay que generar (Veo 3.1, Gemini u otra)
 
@@ -36,15 +38,11 @@ Desde la raíz del proyecto, borra los frames provisionales y extrae los nuevos 
 frames para 8 s):
 
 ```bash
-rm public/sequences/caida/*.webp public/sequences/caida/mobile/*.webp
+rm public/sequences/caida/*.webp
 ```
 
 ```bash
 ffmpeg -i caida.mp4 -vf "fps=24,scale=1600:-1" -q:v 80 public/sequences/caida/%04d.webp
-```
-
-```bash
-ffmpeg -i caida.mp4 -vf "fps=24,crop=ih*0.62:ih:iw*0.72-ih*0.31:0,scale=-2:900" -q:v 75 public/sequences/caida/mobile/%04d.webp
 ```
 
 ## 3. Actualizar la cantidad de frames

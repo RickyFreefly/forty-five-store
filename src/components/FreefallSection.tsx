@@ -3,11 +3,25 @@ import { motion, useMotionValueEvent, useReducedMotion, useTransform, type Motio
 import { ArrowRight } from "lucide-react";
 import { ScrollSequence } from "./ScrollSequence";
 import { CoordinateTag } from "./brand/BrandMotifs";
-import { EXIT_ALTITUDE_M, formatAltitude, progressToAltitude } from "../lib/scrollSequence";
+import { EXIT_ALTITUDE_M, formatAltitude, interpolateStops, progressToAltitude } from "../lib/scrollSequence";
 
 /** Frames in public/sequences/caida — update when the real video is extracted (see its README). */
 const FRAME_COUNT = 72;
 const DEPLOY_ALTITUDE_M = 1500;
+
+// Where the skydiver is across the frame (0 = left, 1 = right) through the fall, matching the
+// focus of each keyframe in scripts/build-caida-frames.py. Narrow screens crop around it.
+const SUBJECT_X = [
+  [0, 0.74],
+  [0.17, 0.74],
+  [0.26, 0.72],
+  [0.35, 0.62],
+  [0.67, 0.62],
+  [0.75, 0.76],
+  [0.83, 0.76],
+  [0.9, 0.8],
+] as const;
+const subjectX = (p: number) => interpolateStops(SUBJECT_X, p);
 
 // White copy straight on the footage: a soft shadow instead of a heavy overlay.
 const ON_FOOTAGE = "[text-shadow:0_1px_2px_rgba(33,31,32,0.6),0_2px_18px_rgba(33,31,32,0.55)]";
@@ -28,7 +42,7 @@ export function FreefallSection({ onShop }: FreefallSectionProps) {
     <ScrollSequence
       id="caida-libre"
       basePath="/sequences/caida"
-      mobileBasePath="/sequences/caida/mobile"
+      focusX={subjectX}
       frameCount={FRAME_COUNT}
       heightVh={420}
       label="Paracaidista en caída libre vistiendo el traje FORTY FIVE, desde el salto hasta el aterrizaje."

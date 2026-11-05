@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { coverRect, formatAltitude, nearestLoaded, preloadOrder, progressToAltitude, progressToFrame } from "./scrollSequence";
+import {
+  coverRect,
+  fitRect,
+  formatAltitude,
+  interpolateStops,
+  nearestLoaded,
+  preloadOrder,
+  progressToAltitude,
+  progressToFrame,
+} from "./scrollSequence";
 
 describe("progressToFrame", () => {
   it("maps 0 to the first frame and 1 to the last", () => {
@@ -83,5 +92,38 @@ describe("coverRect", () => {
     const r = coverRect(1600, 900, 2000, 900);
     expect(r.dw).toBe(2000);
     expect(r.dy).toBeCloseTo((900 - 1125) / 2);
+  });
+});
+
+describe("fitRect", () => {
+  it("covers a wide desktop screen like object-fit: cover", () => {
+    expect(fitRect(1600, 900, 1920, 1080)).toEqual(coverRect(1600, 900, 1920, 1080));
+  });
+
+  it("on a phone shows at least minVisibleW of the frame, with bands above and below", () => {
+    const r = fitRect(1600, 900, 375, 812, { minVisibleW: 0.5 });
+    expect(r.dw).toBeCloseTo(750);
+    expect(r.dh).toBeLessThan(812);
+    expect(r.dy).toBeCloseTo((812 - r.dh) * 0.4);
+  });
+
+  it("slides the crop towards the subject without leaving gaps at the sides", () => {
+    const r = fitRect(1600, 900, 375, 812, { minVisibleW: 0.5, focusX: 0.75 });
+    expect(r.dx).toBeCloseTo(375 / 2 - 0.75 * 750);
+    const edge = fitRect(1600, 900, 375, 812, { minVisibleW: 0.5, focusX: 1 });
+    expect(edge.dx).toBeCloseTo(375 - 750);
+  });
+});
+
+describe("interpolateStops", () => {
+  const stops = [
+    [0, 0.7],
+    [0.5, 0.6],
+    [1, 0.8],
+  ] as const;
+  it("holds the ends and interpolates in between", () => {
+    expect(interpolateStops(stops, -1)).toBe(0.7);
+    expect(interpolateStops(stops, 0.25)).toBeCloseTo(0.65);
+    expect(interpolateStops(stops, 2)).toBe(0.8);
   });
 });
