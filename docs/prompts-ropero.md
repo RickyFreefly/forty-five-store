@@ -45,9 +45,13 @@ chicle, `fucsia` fucsia, `verdeK` verde kelly.
 
 ## Cómo ponerlas en la web
 
-1. Convierte cada PNG a WebP con el nombre de la tabla, por ejemplo `hoodie-negro.webp`, y la
-   espalda con `-espalda`: `hoodie-negro-espalda.webp`. Guárdalas en `public/images/ropero/`
-   (reemplaza las que ya existen).
-2. Por cada prenda con espalda, agrega su nombre sin extensión a `BACK_PHOTOS` en
-   `src/data/ropero.ts`, por ejemplo `"hoodie-negro"`. El botón «Espalda» se activa solo.
-3. Si quieres cambiar qué cuelga en el riel o en qué orden, edita `RACK` en el mismo archivo.
+1. Convierte cada PNG a WebP con el nombre de la tabla, por ejemplo `hoodie-negro.webp`, la
+   espalda con `-espalda` (`hoodie-negro-espalda.webp`) y el lado con `-lado`
+   (`hoodie-negro-lado.webp`). Recorta las vistas de una prenda con el mismo encuadre y
+   guárdalas en `public/images/ropero/` (reemplaza las que ya existen). Los originales van en
+   `assets-src/ropero/`.
+2. Registra las vistas extra en `EXTRA_VIEWS` en `src/data/ropero.ts`, por ejemplo
+   `"tee-negro": ["back", "side"]`. Los botones «Espalda» y «Lado» se activan solos.
+3. El hoodie es la excepción: solo se fotografía en negro. `python3 scripts/recolor-hoodie.py`
+   tiñe sus tres vistas a todos los colores del hoodie en `src/data/ropero.ts`.
+4. Si quieres cambiar qué cuelga en el riel o en qué orden, edita `RACK` en el mismo archivo.

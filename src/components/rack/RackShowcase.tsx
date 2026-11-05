@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { COLORS, PROD, RACK, hasBack, photoUrl, type RoperoPhotoSet, type RoperoProduct } from "../../data/ropero";
+import { COLORS, PROD, RACK, hasView, photoUrl, type RoperoPhotoSet, type RoperoProduct, type RoperoView } from "../../data/ropero";
 import { formatCOP } from "../../data/products";
 import { useCartStore } from "../../store/cart";
 import { EASE_OUT, SPRING_SETTLE } from "../../lib/motionTokens";
 
 /**
  * El Ropero — riel de prendas colgadas. Al tocar una prenda, el resto se desenfoca y la
- * elegida viaja al centro (layoutId compartido) con nombre, precio, frente/espalda, colores
+ * elegida viaja al centro (layoutId compartido) con nombre, precio, frente/espalda/lado, colores
  * y tallas; las flechas pasan a la prenda vecina sin salir del enfoque.
  */
 
@@ -16,6 +16,12 @@ import { EASE_OUT, SPRING_SETTLE } from "../../lib/motionTokens";
 const HANG: Record<RoperoPhotoSet, number> = { hoodie: 0.9, tee: 0.92, polo: 0.92, pant: 1.45 };
 
 const garmentId = (i: number) => `garment-${i}`;
+
+const VIEWS: { id: RoperoView; label: string; alt: string }[] = [
+  { id: "front", label: "Frente", alt: "de frente" },
+  { id: "back", label: "Espalda", alt: "de espalda" },
+  { id: "side", label: "Lado", alt: "de lado" },
+];
 
 export function RackShowcase() {
   const [focus, setFocus] = useState<number | null>(null);
@@ -175,11 +181,10 @@ function FocusView({ index, onClose, onStep }: FocusViewProps) {
 
 function FocusContent({ index, product, initialColor }: { index: number; product: RoperoProduct; initialColor: string }) {
   const [color, setColor] = useState(initialColor);
-  const [side, setSide] = useState<"front" | "back">("front");
+  const [side, setSide] = useState<RoperoView>("front");
   const [size, setSize] = useState<string | null>(null);
   const addItem = useCartStore((s) => s.addItem);
   const reduceMotion = useReducedMotion();
-  const backOk = hasBack(product, color);
   const tall = product.photo === "pant";
 
   function add() {
@@ -198,7 +203,7 @@ function FocusContent({ index, product, initialColor }: { index: number; product
           layoutId={garmentId(index)}
           key={`${color}-${side}`}
           src={photoUrl(product, color, side)}
-          alt={`${product.name} en ${COLORS[color][0]}, ${side === "front" ? "de frente" : "de espalda"}`}
+          alt={`${product.name} en ${COLORS[color][0]}, ${VIEWS.find((v) => v.id === side)?.alt}`}
           draggable={false}
           className={`-mt-1 w-auto object-contain drop-shadow-[0_18px_24px_rgba(33,31,32,0.22)] select-none ${
             tall ? "h-[min(46vh,420px)]" : "h-[min(36vh,340px)]"
@@ -222,21 +227,21 @@ function FocusContent({ index, product, initialColor }: { index: number; product
         </div>
 
         <div role="group" aria-label="Vista" className="flex rounded-full border border-ink/15 p-0.5 text-[11px] font-semibold tracking-[0.12em] uppercase">
-          {(["front", "back"] as const).map((s) => {
-            const disabled = s === "back" && !backOk;
+          {VIEWS.map((v) => {
+            const disabled = !hasView(product, color, v.id);
             return (
               <button
-                key={s}
+                key={v.id}
                 type="button"
                 disabled={disabled}
-                aria-pressed={side === s}
-                title={disabled ? "Foto de espalda en camino" : undefined}
-                onClick={() => setSide(s)}
+                aria-pressed={side === v.id}
+                title={disabled ? "Foto en camino" : undefined}
+                onClick={() => setSide(v.id)}
                 className={`rounded-full px-4 py-1.5 transition focus-visible:ring-2 focus-visible:ring-orange focus-visible:outline-none ${
-                  side === s ? "bg-ink text-paper" : "text-ink/70 hover:text-ink"
+                  side === v.id ? "bg-ink text-paper" : "text-ink/70 hover:text-ink"
                 } disabled:cursor-not-allowed disabled:text-ink/30`}
               >
-                {s === "front" ? "Frente" : "Espalda"}
+                {v.label}
               </button>
             );
           })}
@@ -253,7 +258,8 @@ function FocusContent({ index, product, initialColor }: { index: number; product
               title={COLORS[c][0]}
               onClick={() => {
                 setColor(c);
-                setSide("front");
+                // Conserva la vista si ese color la tiene; si no, vuelve al frente.
+                if (!hasView(product, c, side)) setSide("front");
               }}
               style={{ backgroundColor: COLORS[c][1] }}
               className={`h-6 w-6 rounded-full border border-ink/20 transition focus-visible:outline-none ${

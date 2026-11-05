@@ -110,17 +110,29 @@ export const RACK: { productId: string; color: string }[] = [
   { productId: "drop-zone-hoodie", color: "celeste" },
 ];
 
-/**
- * Fotos de espalda disponibles, como "<set>-<color>". Cuando agregues
- * public/images/ropero/hoodie-negro-espalda.webp, añade "hoodie-negro" aquí y el botón
- * "Espalda" se activa solo para esa prenda.
- */
-export const BACK_PHOTOS = new Set<string>([]);
+export type RoperoView = "front" | "back" | "side";
 
-export function photoUrl(product: RoperoProduct, color: string, side: "front" | "back" = "front") {
-  return `/images/ropero/${product.photo}-${color}${side === "back" ? "-espalda" : ""}.webp`;
+/** Sufijo del archivo de cada vista: <set>-<color><sufijo>.webp. */
+const VIEW_SUFFIX: Record<RoperoView, string> = { front: "", back: "-espalda", side: "-lado" };
+
+/**
+ * Sets fotografiados en todas las vistas, para todos sus colores. Las del hoodie salen de las
+ * fotos del negro, teñidas con scripts/recolor-hoodie.py (córrelo si cambias sus colores).
+ */
+const ALL_VIEWS: RoperoPhotoSet[] = ["hoodie"];
+
+/**
+ * Vistas extra disponibles por "<set>-<color>" (el frente siempre existe), para sets que no
+ * están en ALL_VIEWS. Cuando agregues public/images/ropero/tee-negro-espalda.webp, añade
+ * "tee-negro": ["back"] aquí y el botón "Espalda" se activa solo para esa prenda.
+ */
+export const EXTRA_VIEWS: Record<string, RoperoView[]> = {};
+
+export function photoUrl(product: RoperoProduct, color: string, view: RoperoView = "front") {
+  return `/images/ropero/${product.photo}-${color}${VIEW_SUFFIX[view]}.webp`;
 }
 
-export function hasBack(product: RoperoProduct, color: string) {
-  return BACK_PHOTOS.has(`${product.photo}-${color}`);
+export function hasView(product: RoperoProduct, color: string, view: RoperoView) {
+  if (view === "front" || ALL_VIEWS.includes(product.photo)) return true;
+  return (EXTRA_VIEWS[`${product.photo}-${color}`] ?? []).includes(view);
 }
