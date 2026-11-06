@@ -122,14 +122,11 @@ export function RackShowcase() {
                       // Hueco del mismo tamaño mientras la prenda está en el centro.
                       <span style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }} className="block aspect-[0.6]" />
                     ) : (
-                      <motion.img
+                      <RackPhoto
                         layoutId={garmentId(i)}
-                        src={photoUrl(product, item.color)}
-                        alt=""
-                        draggable={false}
+                        product={product}
+                        color={item.color}
                         style={{ height: `calc(var(--rack-h) * ${HANG[product.kind]})` }}
-                        className="relative w-auto object-contain drop-shadow-[0_10px_14px_rgba(33,31,32,0.18)] select-none"
-                        transition={{ duration: 0.55, ease: EASE_OUT }}
                       />
                     )}
                   </HangingGarment>
@@ -308,6 +305,47 @@ function FocusContent({ index, product, initialColor }: { index: number; product
         </button>
       </motion.div>
     </div>
+  );
+}
+
+const RACK_PHOTO_CLASS = "object-contain drop-shadow-[0_10px_14px_rgba(33,31,32,0.18)] select-none";
+
+// Media vuelta en dos tiempos: la vista que sale se cierra hacia el centro y la que entra se abre
+// cuando la otra ya se cerró. Los retrasos se invierten al quitar el cursor para deshacer el giro.
+const TURN = "transition-[scale,opacity] duration-200 motion-reduce:transition-opacity";
+const TURN_OUT = "delay-200 group-hover:scale-x-0 group-hover:delay-0 group-focus-visible:scale-x-0 group-focus-visible:delay-0 motion-reduce:group-hover:scale-x-100 motion-reduce:group-hover:opacity-0 motion-reduce:group-focus-visible:scale-x-100 motion-reduce:group-focus-visible:opacity-0";
+const TURN_IN = "scale-x-0 group-hover:scale-x-100 group-hover:delay-200 group-focus-visible:scale-x-100 group-focus-visible:delay-200 motion-reduce:scale-x-100 motion-reduce:opacity-0 motion-reduce:group-hover:opacity-100 motion-reduce:group-focus-visible:opacity-100";
+
+/**
+ * La foto de la prenda en el riel. Si tiene foto de lado, cuelga de lado y al pasar el cursor
+ * gira hacia el frente, como al sacarla del ropero para mirarla.
+ */
+function RackPhoto({ layoutId, product, color, style }: { layoutId: string; product: RoperoProduct; color: string; style: CSSProperties }) {
+  const transition = { duration: 0.55, ease: EASE_OUT };
+  if (!hasView(product, "side")) {
+    return (
+      <motion.img
+        layoutId={layoutId}
+        src={photoUrl(product, color)}
+        alt=""
+        draggable={false}
+        style={style}
+        className={`relative w-auto ${RACK_PHOTO_CLASS}`}
+        transition={transition}
+      />
+    );
+  }
+  // Las dos vistas tienen el mismo encuadre: el frente da el tamaño y el lado va encima.
+  return (
+    <motion.div layoutId={layoutId} className="relative" transition={transition}>
+      <img src={photoUrl(product, color)} alt="" draggable={false} style={style} className={`block w-auto ${RACK_PHOTO_CLASS} ${TURN} ${TURN_IN}`} />
+      <img
+        src={photoUrl(product, color, "side")}
+        alt=""
+        draggable={false}
+        className={`absolute inset-0 h-full w-full ${RACK_PHOTO_CLASS} ${TURN} ${TURN_OUT}`}
+      />
+    </motion.div>
   );
 }
 
